@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DevLabs Team</title>
+  <meta name="description" content="DevLabs Team — Construimos el futuro del código, una línea a la vez.">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- TV Transition Overlay -->
+  <div class="tv-overlay" id="tv-overlay"></div>
+
+  <!-- Preloader -->
+  <div class="preloader" id="preloader">
+    <div class="preloader__inner">
+      <div class="preloader__logo">
+        <span class="preloader__bracket">&lt;</span>DL<span class="preloader__bracket">/&gt;
+      </div>
+      <div class="preloader__bar">
+        <div class="preloader__fill"></div>
+      </div>
+      <span class="preloader__text">inicializando...</span>
+    </div>
+  </div>
+
+  <!-- Custom Cursor -->
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-follower" id="cursor-follower"></div>
+
+  <!-- Background Canvas -->
+  <canvas id="grid-bg"></canvas>
+
+  <!-- Floating Orbs -->
+  <div class="orb orb--1"></div>
+  <div class="orb orb--2"></div>
+  <div class="orb orb--3"></div>
+
+  <!-- Navigation -->
+  <nav class="nav" id="nav">
+    <a href="#hero" class="nav__logo">
+      <span class="nav__logo-bracket">&lt;</span>DL<span class="nav__logo-bracket">/&gt;</span>
+    </a>
+    <div class="nav__links">
+      <a href="#hero" class="nav__link">Inicio</a>
+      <a href="#about" class="nav__link">Sobre nosotros</a>
+      <a href="#stats" class="nav__link">Números</a>
+      <a href="#projects" class="nav__link">Proyectos</a>
+      <a href="#tech" class="nav__link">Tech Stack</a>
+      <a href="#contact" class="nav__link">Contacto</a>
+    </div>
+    <a href="https://github.com/DevLabs-Team" target="_blank" class="nav__github magnetic" data-strength="20">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+      </svg>
+      GitHub
+    </a>
+  </nav>
+
+  <!-- Hero Section -->
+  <section id="hero" class="hero">
+    <div class="hero__content">
+      <div class="hero__badge reveal-up">
+        <span class="hero__badge-dot"></span>
+        Organización de desarrollo
+      </div>
+      <h1 class="hero__title">
+        <span class="hero__title-line reveal-up" style="--delay:0.1s">Dev</span>
+        <span class="hero__title-line hero__title-line--accent reveal-up" style="--delay:0.2s">Labs</span>
+        <span class="hero__title-line hero__title-line--thin reveal-up" style="--delay:0.3s">Team</span>
+      </h1>
+      <p class="hero__subtitle reveal-up" style="--delay:0.4s">
+        Construimos el futuro del código, <br>
+        una línea a la vez.
+      </p>
+      <div class="hero__cta reveal-up" style="--delay:0.5s">
+        <a href="https://github.com/DevLabs-Team" target="_blank" class="btn btn--primary magnetic" data-strength="30">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+          Ver en GitHub
+        </a>
+        <a href="#about" class="btn btn--ghost magnetic" data-strength="20">Conocer más</a>
+      </div>
+    </div>
+    <div class="hero__terminal reveal-up" style="--delay:0.3s">
+      <div class="terminal" id="terminal">
+        <div class="terminal__bar">
+          <span class="terminal__dot terminal__dot--red"></span>
+          <span class="terminal__dot terminal__dot--yellow"></span>
+          <span class="terminal__dot terminal__dot--green"></span>
+          <span class="terminal__title">devlabs@team:~</span>
+        </div>
+        <div class="terminal__body">
+          <div class="terminal__line" data-line="0">
+            <span class="terminal__prompt">$</span>
+            <span class="terminal__cmd" data-text="git clone https://github.com/DevLabs-Team"></span><span class="terminal__cursor"></span>
+          </div>
+          <div class="terminal__line" data-line="1">
+            <span class="terminal__prompt">$</span>
+            <span class="terminal__cmd" data-text="cd DevLabs-Team"></span><span class="terminal__cursor"></span>
+          </div>
+          <div class="terminal__line" data-line="2">
+            <span class="terminal__prompt">$</span>
+            <span class="terminal__cmd" data-text="npm run future"></span><span class="terminal__cursor"></span>
+          </div>
+          <div class="terminal__line terminal__line--success" data-line="3">
+            &#10003; DevLabs Team <span class="terminal__highlight">initialized</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Marquee -->
+  <div class="marquee">
+    <div class="marquee__track">
+      <span class="marquee__item">INNOVACIÓN</span>
+      <span class="marquee__sep">&bull;</span>
+      <span class="marquee__item">CÓDIGO</span>
+      <span class="marquee__sep">&bull;</span>
+      <span class="marquee__item">COMUNIDAD</span>
+      <span class="marquee__sep">&bull;</span>
+      <span class="marquee__item">FUTURO</span>
+      <span class="marquee__sep">&bull;</span>
+      <span class="marquee__item">OPEN SOURCE</span>
+      <span class="marquee__sep">&bull;</span>
+      <span class="marquee__item">EXCELENCIA</span>
+      <span class="marquee__sep">&bull;</span>
+      <span class="marquee__item">INNOVACIÓN</span>
+      <span class="marquee__sep">&bull;</span>
+      <span class="marquee__item">CÓDIGO</span>
+      <span class="marquee__sep">&bull;</span>
+      <span class="marquee__item">COMUNIDAD</span>
+      <span class="marquee__sep">&bull;</span>
+      <span class="marquee__item">FUTURO</span>
+      <span class="marquee__sep">&bull;</span>
+      <span class="marquee__item">OPEN SOURCE</span>
+      <span class="marquee__sep">&bull;</span>
+      <span class="marquee__item">EXCELENCIA</span>
+      <span class="marquee__sep">&bull;</span>
+      <span class="marquee__item">INNOVACIÓN</span>
+      <span class="marquee__sep">&bull;</span>
+      <span class="marquee__item">CÓDIGO</span>
+      <span class="marquee__sep">&bull;</span>
+      <span class="marquee__item">COMUNIDAD</span>
+      <span class="marquee__sep">&bull;</span>
+      <span class="marquee__item">FUTURO</span>
+      <span class="marquee__sep">&bull;</span>
+      <span class="marquee__item">OPEN SOURCE</span>
+      <span class="marquee__sep">&bull;</span>
+      <span class="marquee__item">EXCELENCIA</span>
+      <span class="marquee__sep">&bull;</span>
+    </div>
+  </div>
+
+  <!-- About Section -->
+  <section id="about" class="about">
+    <div class="section__header">
+      <span class="section__number reveal-left">01</span>
+      <h2 class="section__title reveal-up">Sobre nosotros</h2>
+      <div class="section__line reveal-scale"></div>
+    </div>
+    <div class="about__intro reveal-up">
+      <p>Somos un equipo de desarrolladores apasionados por la tecnología y el código limpio. Nuestra misión es crear soluciones innovadoras que impacten de forma positiva.</p>
+    </div>
+    <div class="about__grid">
+      <div class="about__card reveal-up" style="--delay:0s">
+        <div class="about__card-glow"></div>
+        <div class="about__card-icon">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/>
+          </svg>
+        </div>
+        <h3 class="about__card-title">Innovación</h3>
+        <p class="about__card-text">Exploramos nuevas tecnologías y metodologías para crear soluciones que marcan la diferencia en la industria.</p>
+      </div>
+      <div class="about__card reveal-up" style="--delay:0.1s">
+        <div class="about__card-glow"></div>
+        <div class="about__card-icon">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/>
+            <circle cx="9" cy="7" r="4"/>
+            <path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>
+          </svg>
+        </div>
+        <h3 class="about__card-title">Comunidad</h3>
+        <p class="about__card-text">Un equipo apasionado que comparte conocimiento, crece junto a otros y construye en abierto.</p>
+      </div>
+      <div class="about__card reveal-up" style="--delay:0.2s">
+        <div class="about__card-glow"></div>
+        <div class="about__card-icon">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5">
+            <polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/>
+          </svg>
+        </div>
+        <h3 class="about__card-title">Excelencia</h3>
+        <p class="about__card-text">Código limpio, buenas prácticas y estándares altos en todo lo que construimos y desplegamos.</p>
+      </div>
+      <div class="about__card reveal-up" style="--delay:0.3s">
+        <div class="about__card-glow"></div>
+        <div class="about__card-icon">
+          <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+          </svg>
+        </div>
+        <h3 class="about__card-title">Velocidad</h3>
+        <p class="about__card-text">Desarrollo ágil y eficiente, sin sacrificar la calidad del producto final ni la experiencia del usuario.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section id="stats" class="stats">
+    <div class="stats__grid">
+      <div class="stat reveal-up" style="--delay:0s">
+        <span class="stat__number" data-target="1">0</span>
+        <span class="stat__label">Repositorios</span>
+        <div class="stat__bar"><div class="stat__bar-fill"></div></div>
+      </div>
+      <div class="stat reveal-up" style="--delay:0.1s">
+        <span class="stat__number" data-target="3">0</span>
+        <span class="stat__label">Miembros</span>
+        <div class="stat__bar"><div class="stat__bar-fill"></div></div>
+      </div>
+      <div class="stat reveal-up" style="--delay:0.2s">
+        <span class="stat__number" data-target="100">0</span>
+        <span class="stat__suffix">%</span>
+        <span class="stat__label">Open Source</span>
+        <div class="stat__bar"><div class="stat__bar-fill"></div></div>
+      </div>
+      <div class="stat reveal-up" style="--delay:0.3s">
+        <span class="stat__number" data-target="24">0</span>
+        <span class="stat__suffix">/7</span>
+        <span class="stat__label">Coding</span>
+        <div class="stat__bar"><div class="stat__bar-fill"></div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Projects Section -->
+  <section id="projects" class="projects">
+    <div class="section__header">
+      <span class="section__number reveal-left">02</span>
+      <h2 class="section__title reveal-up">Proyectos</h2>
+      <div class="section__line reveal-scale"></div>
+    </div>
+    <div class="projects__grid" id="repos-grid">
+      <div class="project-card--loading reveal-up">
+        <div class="skeleton skeleton--circle"></div>
+        <div class="skeleton skeleton--line"></div>
+        <div class="skeleton skeleton--line skeleton--short"></div>
+      </div>
+      <div class="project-card--loading reveal-up" style="--delay:0.1s">
+        <div class="skeleton skeleton--circle"></div>
+        <div class="skeleton skeleton--line"></div>
+        <div class="skeleton skeleton--line skeleton--short"></div>
+      </div>
+      <div class="project-card--loading reveal-up" style="--delay:0.2s">
+        <div class="skeleton skeleton--circle"></div>
+        <div class="skeleton skeleton--line"></div>
+        <div class="skeleton skeleton--line skeleton--short"></div>
+      </div>
+    </div>
+    <div class="projects__cta reveal-up">
+      <a href="repositorios.html" class="btn btn--outline magnetic" data-strength="20">
+        Ver todos los repositorios
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M5 12h14M12 5l7 7-7 7"/>
+        </svg>
+      </a>
+    </div>
+  </section>
+
+  <!-- Tech Stack Section -->
+  <section id="tech" class="tech">
+    <div class="section__header">
+      <span class="section__number reveal-left">03</span>
+      <h2 class="section__title reveal-up">Tech Stack</h2>
+      <div class="section__line reveal-scale"></div>
+    </div>
+    <div class="tech__grid">
+      <div class="tech__item reveal-up" style="--delay:0s" data-tilt>
+        <div class="tech__item-glow"></div>
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M20 3H4a1 1 0 00-1 1v16a1 1 0 001 1h16a1 1 0 001-1V4a1 1 0 00-1-1zM8 17V7l8 5-8 5z"/></svg>
+        <span>TypeScript</span>
+      </div>
+      <div class="tech__item reveal-up" style="--delay:0.05s" data-tilt>
+        <div class="tech__item-glow"></div>
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+        <span>Node.js</span>
+      </div>
+      <div class="tech__item reveal-up" style="--delay:0.1s" data-tilt>
+        <div class="tech__item-glow"></div>
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5"/></svg>
+        <span>React</span>
+      </div>
+      <div class="tech__item reveal-up" style="--delay:0.15s" data-tilt>
+        <div class="tech__item-glow"></div>
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M4 4h16v16H4z"/><path d="M4 9h16M9 4v16"/></svg>
+        <span>Python</span>
+      </div>
+      <div class="tech__item reveal-up" style="--delay:0.2s" data-tilt>
+        <div class="tech__item-glow"></div>
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="2" y="3" width="20" height="14" rx="2"/><path d="M8 21h8M12 17v4"/></svg>
+        <span>Next.js</span>
+      </div>
+      <div class="tech__item reveal-up" style="--delay:0.25s" data-tilt>
+        <div class="tech__item-glow"></div>
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 16V8a2 2 0 00-1-1.73l-7-4a2 2 0 00-2 0l-7 4A2 2 0 003 8v8a2 2 0 001 1.73l7 4a2 2 0 002 0l7-4A2 2 0 0021 16z"/></svg>
+        <span>GitHub Actions</span>
+      </div>
+      <div class="tech__item reveal-up" style="--delay:0.3s" data-tilt>
+        <div class="tech__item-glow"></div>
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+        <span>DevSecOps</span>
+      </div>
+      <div class="tech__item reveal-up" style="--delay:0.35s" data-tilt>
+        <div class="tech__item-glow"></div>
+        <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M9.663 17h4.673M12 3v1m6.364 1.636l-.707.707M21 12h-1M4 12H3m3.343-5.657l-.707-.707m2.828 9.9a5 5 0 117.072 0l-.548.547A3.374 3.374 0 0014 18.469V19a2 2 0 11-4 0v-.531c0-.895-.356-1.754-.988-2.386l-.548-.547z"/></svg>
+        <span>AI / ML</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- Contact Section -->
+  <section id="contact" class="contact">
+    <div class="section__header">
+      <span class="section__number reveal-left">04</span>
+      <h2 class="section__title reveal-up">Contacto</h2>
+      <div class="section__line reveal-scale"></div>
+    </div>
+    <div class="contact__content reveal-up">
+      <p class="contact__text">¿Tienes una idea? ¿Quieres colaborar?<br>Estamos abiertos a nuevos talentos y proyectos.</p>
+      <div class="contact__links">
+        <a href="mailto:devlabs@elmarcels.xyz" class="contact__link magnetic" data-strength="15">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5">
+            <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"/>
+            <polyline points="22,6 12,13 2,6"/>
+          </svg>
+          devlabs@elmarcels.xyz
+        </a>
+        <a href="https://github.com/DevLabs-Team" target="_blank" class="contact__link magnetic" data-strength="15">
+          <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+            <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+          </svg>
+          GitHub
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer__divider"></div>
+    <div class="footer__content">
+      <div class="footer__logo">
+        <span class="nav__logo-bracket">&lt;</span>DL<span class="nav__logo-bracket">/&gt;</span>
+      </div>
+      <p class="footer__copy">&copy; 2026 DevLabs Team. Todos los derechos reservados.</p>
+      <p class="footer__tagline">Hecho con &#9889; desde Espa&ntilde;a</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>

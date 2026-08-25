@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Repositorios — DevLabs Team</title>
+  <meta name="description" content="Todos los repositorios de DevLabs Team en GitHub.">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- TV Transition Overlay -->
+  <div class="tv-overlay" id="tv-overlay"></div>
+
+  <!-- Preloader -->
+  <div class="preloader" id="preloader">
+    <div class="preloader__inner">
+      <div class="preloader__logo">
+        <span class="preloader__bracket">&lt;</span>DL<span class="preloader__bracket">/&gt;
+      </div>
+      <div class="preloader__bar">
+        <div class="preloader__fill"></div>
+      </div>
+      <span class="preloader__text">cargando repos...</span>
+    </div>
+  </div>
+
+  <!-- Custom Cursor -->
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-follower" id="cursor-follower"></div>
+
+  <!-- Background Canvas -->
+  <canvas id="grid-bg"></canvas>
+
+  <!-- Floating Orbs -->
+  <div class="orb orb--1"></div>
+  <div class="orb orb--2"></div>
+  <div class="orb orb--3"></div>
+
+  <!-- Navigation -->
+  <nav class="nav" id="nav">
+    <a href="index.html" class="nav__logo">
+      <span class="nav__logo-bracket">&lt;</span>DL<span class="nav__logo-bracket">/&gt;</span>
+    </a>
+    <div class="nav__links">
+      <a href="index.html" class="nav__link">Inicio</a>
+      <a href="index.html#about" class="nav__link">Sobre nosotros</a>
+      <a href="index.html#projects" class="nav__link nav__link--active">Repositorios</a>
+      <a href="index.html#tech" class="nav__link">Tech Stack</a>
+      <a href="index.html#contact" class="nav__link">Contacto</a>
+    </div>
+    <a href="https://github.com/DevLabs-Team" target="_blank" class="nav__github magnetic" data-strength="20">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+      </svg>
+      GitHub
+    </a>
+  </nav>
+
+  <!-- Repos Page Header -->
+  <section class="repos-page">
+    <div class="repos-page__header">
+      <a href="index.html" class="repos-page__back reveal-left">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+        Volver al inicio
+      </a>
+      <h1 class="repos-page__title reveal-up">
+        Repositorios
+        <span class="repos-page__count" id="repos-count">0</span>
+      </h1>
+      <p class="repos-page__subtitle reveal-up" style="--delay:0.1s">
+        Todos los proyectos públicos de DevLabs Team, ordenados por actividad reciente.
+      </p>
+    </div>
+
+    <!-- Loading skeletons -->
+    <div class="repos-full__grid" id="repos-full-grid">
+      <div class="project-card--loading reveal-up">
+        <div class="skeleton skeleton--circle"></div>
+        <div class="skeleton skeleton--line"></div>
+        <div class="skeleton skeleton--line skeleton--short"></div>
+      </div>
+      <div class="project-card--loading reveal-up" style="--delay:0.05s">
+        <div class="skeleton skeleton--circle"></div>
+        <div class="skeleton skeleton--line"></div>
+        <div class="skeleton skeleton--line skeleton--short"></div>
+      </div>
+      <div class="project-card--loading reveal-up" style="--delay:0.1s">
+        <div class="skeleton skeleton--circle"></div>
+        <div class="skeleton skeleton--line"></div>
+        <div class="skeleton skeleton--line skeleton--short"></div>
+      </div>
+      <div class="project-card--loading reveal-up" style="--delay:0.15s">
+        <div class="skeleton skeleton--circle"></div>
+        <div class="skeleton skeleton--line"></div>
+        <div class="skeleton skeleton--line skeleton--short"></div>
+      </div>
+      <div class="project-card--loading reveal-up" style="--delay:0.2s">
+        <div class="skeleton skeleton--circle"></div>
+        <div class="skeleton skeleton--line"></div>
+        <div class="skeleton skeleton--line skeleton--short"></div>
+      </div>
+      <div class="project-card--loading reveal-up" style="--delay:0.25s">
+        <div class="skeleton skeleton--circle"></div>
+        <div class="skeleton skeleton--line"></div>
+        <div class="skeleton skeleton--line skeleton--short"></div>
+      </div>
+    </div>
+
+    <div class="repos-page__footer reveal-up">
+      <a href="https://github.com/DevLabs-Team" target="_blank" class="btn btn--outline magnetic" data-strength="20">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+          <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+        </svg>
+        Ver org en GitHub
+      </a>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer__divider"></div>
+    <div class="footer__content">
+      <div class="footer__logo">
+        <span class="nav__logo-bracket">&lt;</span>DL<span class="nav__logo-bracket">/&gt;</span>
+      </div>
+      <p class="footer__copy">&copy; 2026 DevLabs Team. Todos los derechos reservados.</p>
+      <p class="footer__tagline">Hecho con &#9889; desde Espa&ntilde;a</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+</body>
+</html>
