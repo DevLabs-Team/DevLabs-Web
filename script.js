@@ -241,95 +241,180 @@
   });
 
   /* ========================================
-     TERMINAL TYPING EFFECT
+     TERMINAL — INTERACTIVE
      ======================================== */
-  let terminalRunning = false;
+  const termInput = document.getElementById('terminal-input');
+  const termOutput = document.getElementById('terminal-output');
+  const termBody = document.getElementById('terminal-body');
+  const termWelcome = termOutput ? termOutput.querySelector('.terminal__welcome') : null;
+  let cmdHistory = [];
+  let historyIndex = -1;
 
-  function initTerminalTyping() {
-    if (terminalRunning) return;
-    terminalRunning = true;
+  const TERM_COMMANDS = {
+    help: () => [
+      { text: 'Available commands:', cls: 'terminal__output-line--accent' },
+      { text: '  help      — Show this help' },
+      { text: '  about     — About DevLabs Team' },
+      { text: '  projects  — List our projects' },
+      { text: '  team      — Show team members' },
+      { text: '  contact   — How to reach us' },
+      { text: '  tech      — Our tech stack' },
+      { text: '  meme      — Random dev meme / quote' },
+      { text: '  secret    — ???' },
+      { text: '  glitch    — Toggle glitch mode (Konami alt)' },
+      { text: '  clear     — Clear terminal' },
+      { text: '  github    — Open GitHub org' },
+    ],
+    about: () => [
+      { text: 'DevLabs Team — We build the future of code.', cls: 'terminal__output-line--accent' },
+      { text: 'A dev organization focused on open source,' },
+      { text: 'innovation, and community-driven projects.' },
+    ],
+    projects: () => {
+      const grid = document.getElementById('repos-grid');
+      const cards = grid ? grid.querySelectorAll('.project-card__name') : [];
+      if (cards.length) {
+        const lines = [{ text: 'Top projects:', cls: 'terminal__output-line--accent' }];
+        cards.forEach((c) => lines.push({ text: '  → ' + c.textContent.trim() }));
+        return lines;
+      }
+      return [{ text: '  Loading projects... check the Projects section above!' }];
+    },
+    team: () => [
+      { text: 'Fetching team from GitHub API...', cls: 'terminal__output-line--accent' },
+      { text: '  → Check the Team section below for all members.' },
+    ],
+    contact: () => [
+      { text: 'Contact:', cls: 'terminal__output-line--accent' },
+      { text: '  Email: devlabs@elmarcels.xyz' },
+      { text: '  GitHub: github.com/DevLabs-Team' },
+    ],
+    tech: () => [
+      { text: 'Tech Stack:', cls: 'terminal__output-line--accent' },
+      { text: '  TypeScript, Node.js, React, Python, Next.js,' },
+      { text: '  GitHub Actions, DevSecOps, AI/ML, Docker,' },
+      { text: '  PostgreSQL, Kubernetes, Terraform, MongoDB,' },
+      { text: '  Astro, Vue.js, Svelte, Rust, Go, AWS,' },
+      { text: '  Supabase, Firebase, Vercel, Git, Nginx,' },
+      { text: '  REST APIs, GraphQL, Redis, Tailwind CSS,' },
+      { text: '  Three.js, Prisma, Electron, Netlify,' },
+      { text: '  Cloudflare, Ansible, Expo, RabbitMQ,' },
+      { text: '  Grafana, Prometheus, Auth0' },
+    ],
+    github: () => {
+      window.open('https://github.com/DevLabs-Team', '_blank');
+      return [{ text: 'Opening GitHub in new tab...', cls: 'terminal__output-line--accent' }];
+    },
+    meme: () => {
+      const memes = [
+        '"There are only 10 types of people in the world: those who understand binary and those who don\'t."',
+        '"A SQL query walks into a bar, sees two tables and asks... Can I JOIN you?"',
+        '"Why do programmers prefer dark mode? Because light attracts bugs."',
+        '"Debugging is like being the detective in a crime movie where you are also the murderer."',
+        '"I don\'t have a life. I have a terminal.',
+        '"The code works. I don\'t know why."',
+        '"It works on my machine ¯\\_(ツ)_/¯"',
+        '"There\'s no place like 127.0.0.1"',
+        '"First, solve the problem. Then, write the code." — John Johnson',
+        '"Talk is cheap. Show me the code." — Linus Torvalds',
+        '"Any fool can write code that a computer can understand. Good programmers write code that humans can understand." — Martin Fowler',
+        '"Programs must be written for people to read." — Harold Abelson',
+        '"The best error message is the one that never shows up." — Thomas Fuchs',
+        '"Simplicity is prerequisite for reliability." — Edsger W. Dijkstra',
+        '"It\'s not a bug — it\'s an undocumented feature."',
+        '"Weeks of coding can save you hours of planning."',
+        '"Code never lies, comments sometimes do." — Ron Jeffries',
+        '" deleted entire production db. It was a weekend." — @softwaregov',
+      ];
+      const pick = memes[Math.floor(Math.random() * memes.length)];
+      return [
+        { text: '  ┌' + '─'.repeat(52) + '┐', cls: 'terminal__output-line--accent' },
+        { text: '  │ ' + pick.substring(0, 50), cls: '' },
+        { text: '  └' + '─'.repeat(52) + '┘', cls: 'terminal__output-line--accent' },
+      ];
+    },
+    clear: () => 'CLEAR',
+  };
 
-    const lines = document.querySelectorAll('.terminal__line');
-    const cursors = document.querySelectorAll('.terminal__cursor');
-    const typeSpeed = 28;
+  function termPrint(lines) {
+    lines.forEach((l) => {
+      const div = document.createElement('div');
+      div.className = 'terminal__output-line' + (l.cls ? ' ' + l.cls : '');
+      div.textContent = l.text;
+      termOutput.appendChild(div);
+    });
+  }
 
-    // Reset everything
-    lines.forEach((line) => {
-      line.classList.remove('typed');
-      const cmd = line.querySelector('.terminal__cmd');
-      if (cmd && cmd.dataset.text) {
-        cmd.textContent = '';
+  function termPrintHTML(html) {
+    const div = document.createElement('div');
+    div.className = 'terminal__output-line terminal__output-line--accent';
+    div.innerHTML = html;
+    termOutput.appendChild(div);
+  }
+
+  if (termInput) {
+    termInput.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') {
+        const cmd = termInput.value.trim().toLowerCase();
+        termInput.value = '';
+        if (!cmd) return;
+        cmdHistory.push(cmd);
+        historyIndex = cmdHistory.length;
+
+        // Print the command
+        const cmdDiv = document.createElement('div');
+        cmdDiv.className = 'terminal__output-line terminal__output-line--cmd';
+        cmdDiv.textContent = '$ ' + cmd;
+        termOutput.appendChild(cmdDiv);
+
+        // Execute
+        const handler = TERM_COMMANDS[cmd];
+        if (handler) {
+          const result = handler();
+          if (result === 'CLEAR') {
+            termOutput.innerHTML = '';
+          } else {
+            termPrint(result);
+          }
+        } else {
+          termPrint([{ text: `command not found: ${cmd}. Type "help" for available commands.`, cls: 'terminal__output-line--error' }]);
+        }
+
+        // Scroll to bottom
+        if (termBody) termBody.scrollTop = termBody.scrollHeight;
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        if (historyIndex > 0) {
+          historyIndex--;
+          termInput.value = cmdHistory[historyIndex] || '';
+        }
+      } else if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        if (historyIndex < cmdHistory.length - 1) {
+          historyIndex++;
+          termInput.value = cmdHistory[historyIndex] || '';
+        } else {
+          historyIndex = cmdHistory.length;
+          termInput.value = '';
+        }
       }
     });
-    cursors.forEach((c) => c.classList.remove('active'));
 
-    function typeLine(lineIndex) {
-      if (lineIndex >= lines.length) {
-        terminalRunning = false;
-        return;
-      }
-
-      const line = lines[lineIndex];
-      const cmd = line.querySelector('.terminal__cmd');
-      const cursor = line.querySelector('.terminal__cursor');
-      const text = cmd ? cmd.dataset.text : null;
-
-      // Show this line
-      line.classList.add('typed');
-
-      if (cursor) {
-        // Remove cursor from all, add to current
-        cursors.forEach((c) => c.classList.remove('active'));
-        cursor.classList.add('active');
-      }
-
-      if (text) {
-        let i = 0;
-        const type = () => {
-          if (i < text.length) {
-            cmd.textContent += text[i];
-            i++;
-            setTimeout(type, typeSpeed + Math.random() * 12);
-          } else {
-            // Done typing this line, move to next
-            if (cursor) cursor.classList.remove('active');
-            setTimeout(() => typeLine(lineIndex + 1), 300);
-          }
-        };
-        type();
-      } else {
-        // No text to type (success line), just show and move on
-        setTimeout(() => typeLine(lineIndex + 1), 200);
-      }
+    // Focus terminal on click
+    if (termBody) {
+      termBody.addEventListener('click', () => termInput.focus());
     }
-
-    // Start typing after a short delay
-    setTimeout(() => typeLine(0), 600);
-  }
-
-  function initHeroAnimations() {
-    initTerminalTyping();
-  }
-
-  // Replay terminal when scrolled back into view
-  const terminalEl = document.getElementById('terminal');
-  if (terminalEl) {
-    const termObserver = new IntersectionObserver(
-      (entries) => {
-        entries.forEach((entry) => {
-          if (entry.isIntersecting && !terminalRunning) {
-            initTerminalTyping();
-          }
-        });
-      },
-      { threshold: 0.5 }
-    );
-    termObserver.observe(terminalEl);
   }
 
   /* ========================================
      COUNTER ANIMATION (Stats)
      ======================================== */
+
+  function initHeroAnimations() {
+    // Focus terminal input
+    const termInput = document.getElementById('terminal-input');
+    if (termInput) setTimeout(() => termInput.focus(), 500);
+  }
   const statNumbers = document.querySelectorAll('.stat__number');
   const statBars = document.querySelectorAll('.stat__bar-fill');
 
@@ -628,6 +713,7 @@
             card.style.setProperty('--mouse-y', ((e.clientY - rect.top) / rect.height) * 100 + '%');
           });
         });
+        initHoverSounds();
       })
       .catch(() => {
         reposGrid.innerHTML = `<p class="repos-empty">Error al cargar repositorios.</p>`;
@@ -658,6 +744,7 @@
             card.style.setProperty('--mouse-y', ((e.clientY - rect.top) / rect.height) * 100 + '%');
           });
         });
+        initHoverSounds();
       })
       .catch(() => {
         reposFullGrid.innerHTML = `<p class="repos-empty">Error al cargar repositorios.</p>`;
@@ -693,6 +780,529 @@
       el.style.transform = 'translate(0, 0)';
       el.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
       setTimeout(() => { el.style.transition = ''; }, 400);
+    });
+  }
+
+  /* ========================================
+     i18n — LANGUAGE TOGGLE
+     ======================================== */
+  const translations = {
+    es: {
+      'nav.home': 'Inicio', 'nav.about': 'Sobre nosotros', 'nav.stats': 'N&uacute;meros',
+      'nav.projects': 'Proyectos', 'nav.team': 'Equipo', 'nav.tech': 'Tech Stack', 'nav.contact': 'Contacto',
+      'hero.badge': 'Organizaci&oacute;n de desarrollo',
+      'hero.subtitle': 'Construimos el futuro del c&oacute;digo,<br>una l&iacute;nea a la vez.',
+      'hero.ctaGithub': 'Ver en GitHub', 'hero.ctaAbout': 'Conocer m&aacute;s',
+      'terminal.welcome': 'Bienvenido al terminal de DevLabs Team. Escribe <span class="terminal__highlight">help</span> para ver los comandos disponibles.',
+      'about.title': 'Sobre nosotros',
+      'about.intro': 'Somos un equipo de desarrolladores apasionados por la tecnolog&iacute;a y el c&oacute;digo limpio. Nuestra misi&oacute;n es crear soluciones innovadoras que impacten de forma positiva.',
+      'about.card1.title': 'Innovaci&oacute;n', 'about.card1.text': 'Exploramos nuevas tecnolog&iacute;as y metodolog&iacute;as para crear soluciones que marcan la diferencia en la industria.',
+      'about.card2.title': 'Comunidad', 'about.card2.text': 'Un equipo apasionado que comparte conocimiento, crece junto a otros y construye en abierto.',
+      'about.card3.title': 'Excelencia', 'about.card3.text': 'C&oacute;digo limpio, buenas pr&aacute;cticas y est&aacute;ndares altos en todo lo que construimos y desplegamos.',
+      'about.card4.title': 'Velocidad', 'about.card4.text': 'Desarrollo &aacute;gil y eficiente, sin sacrificar la calidad del producto final ni la experiencia del usuario.',
+      'stats.repos': 'Repositorios', 'stats.members': 'Miembros', 'stats.opensource': 'Open Source', 'stats.coding': 'Coding',
+      'projects.title': 'Proyectos', 'projects.cta': 'Ver todos los repositorios',
+      'team.title': 'Equipo',
+      'contact.title': 'Contacto', 'contact.text': '&iquest;Tienes una idea? &iquest;Quieres colaborar?<br>Estamos abiertos a nuevos talentos y proyectos.',
+      'footer.rights': 'Todos los derechos reservados.', 'footer.made': 'Hecho con &#9889; desde Espa&ntilde;a',
+    },
+    en: {
+      'nav.home': 'Home', 'nav.about': 'About us', 'nav.stats': 'Numbers',
+      'nav.projects': 'Projects', 'nav.team': 'Team', 'nav.tech': 'Tech Stack', 'nav.contact': 'Contact',
+      'hero.badge': 'Development organization',
+      'hero.subtitle': 'We build the future of code,<br>one line at a time.',
+      'hero.ctaGithub': 'View on GitHub', 'hero.ctaAbout': 'Learn more',
+      'terminal.welcome': 'Welcome to DevLabs Team terminal. Type <span class="terminal__highlight">help</span> to see available commands.',
+      'about.title': 'About us',
+      'about.intro': 'We are a team of developers passionate about technology and clean code. Our mission is to create innovative solutions that have a positive impact.',
+      'about.card1.title': 'Innovation', 'about.card1.text': 'We explore new technologies and methodologies to create solutions that make a difference in the industry.',
+      'about.card2.title': 'Community', 'about.card2.text': 'A passionate team that shares knowledge, grows with others, and builds in the open.',
+      'about.card3.title': 'Excellence', 'about.card3.text': 'Clean code, best practices, and high standards in everything we build and deploy.',
+      'about.card4.title': 'Speed', 'about.card4.text': 'Agile and efficient development, without sacrificing product quality or user experience.',
+      'stats.repos': 'Repositories', 'stats.members': 'Members', 'stats.opensource': 'Open Source', 'stats.coding': 'Coding',
+      'projects.title': 'Projects', 'projects.cta': 'View all repositories',
+      'team.title': 'Team',
+      'contact.title': 'Contact', 'contact.text': 'Got an idea? Want to collaborate?<br>We are open to new talent and projects.',
+      'footer.rights': 'All rights reserved.', 'footer.made': 'Made with &#9889; from Spain',
+    },
+  };
+
+  let currentLang = localStorage.getItem('devlabs-lang') || 'es';
+
+  function applyLang(lang) {
+    currentLang = lang;
+    localStorage.setItem('devlabs-lang', lang);
+    const dict = translations[lang];
+    document.documentElement.lang = lang === 'es' ? 'es' : 'en';
+
+    // Transition effect
+    document.body.classList.add('i18n-transitioning');
+    setTimeout(() => {
+      document.querySelectorAll('[data-i18n]').forEach((el) => {
+        const key = el.getAttribute('data-i18n');
+        if (dict[key]) el.innerHTML = dict[key];
+      });
+      document.body.classList.remove('i18n-transitioning');
+    }, 250);
+
+    // Update toggle label
+    const label = document.getElementById('lang-label');
+    if (label) label.textContent = lang === 'es' ? 'EN' : 'ES';
+  }
+
+  const langBtn = document.getElementById('lang-toggle');
+  if (langBtn) {
+    langBtn.addEventListener('click', () => {
+      applyLang(currentLang === 'es' ? 'en' : 'es');
+    });
+  }
+  // Apply saved language on load
+  if (currentLang !== 'es') applyLang(currentLang);
+
+  /* ========================================
+     PARALLAX ON HERO LAYERS
+     ======================================== */
+  const parallaxLayers = document.querySelectorAll('[data-parallax-speed]');
+
+  function updateParallax() {
+    const scrollY = window.scrollY;
+    parallaxLayers.forEach((layer) => {
+      const speed = parseFloat(layer.dataset.parallaxSpeed) || 0;
+      layer.style.transform = `translateY(${scrollY * speed}px)`;
+    });
+  }
+
+  window.addEventListener('scroll', updateParallax, { passive: true });
+
+  /* ========================================
+     GITHUB API — FETCH TEAM MEMBERS
+     ======================================== */
+  const teamGrid = document.getElementById('team-grid');
+  if (teamGrid) {
+    fetch('https://api.github.com/orgs/DevLabs-Team/members?per_page=100')
+      .then((r) => r.json())
+      .then((members) => {
+        if (!Array.isArray(members) || members.length === 0) {
+          // Fallback: try public_members endpoint
+          return fetch('https://api.github.com/orgs/DevLabs-Team/public_members?per_page=100')
+            .then((r2) => r2.json())
+            .then((pubMembers) => {
+              if (Array.isArray(pubMembers) && pubMembers.length > 0) {
+                renderTeam(pubMembers);
+              } else {
+                teamGrid.innerHTML = `
+                  <div class="team-card reveal-up" style="text-align:center; grid-column:1/-1;">
+                    <p class="repos-empty">Los miembros del equipo son privados en GitHub.<br>
+                    <span style="color:var(--accent);font-size:0.75rem;">Para que aparezcan aqu&iacute;, cada miembro debe ir a su perfil en la org &rarr; Visibility &rarr; Public.</span></p>
+                  </div>`;
+              }
+            });
+        }
+        renderTeam(members);
+      })
+      .catch(() => {
+        teamGrid.innerHTML = `<p class="repos-empty">Error al cargar equipo.</p>`;
+      });
+  }
+
+  function renderTeam(members) {
+    if (!teamGrid) return;
+    teamGrid.innerHTML = members.map((m) => `
+      <div class="team-card reveal-up" data-tilt>
+        <div class="team-card__glow"></div>
+        <img class="team-card__avatar" src="${m.avatar_url}" alt="${m.login}" loading="lazy">
+        <h3 class="team-card__name">${m.login}</h3>
+        <span class="team-card__role">Member</span>
+        <a href="${m.html_url}" target="_blank" class="team-card__link magnetic" data-strength="10">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+          GitHub
+        </a>
+      </div>
+    `).join('');
+    teamGrid.querySelectorAll('.reveal-up').forEach((el) => revealObserver.observe(el));
+    teamGrid.querySelectorAll('[data-tilt]').forEach(initTilt);
+    teamGrid.querySelectorAll('.magnetic').forEach(initMagnetic);
+    teamGrid.querySelectorAll('.team-card').forEach((card) => {
+      card.addEventListener('mousemove', (e) => {
+        const rect = card.getBoundingClientRect();
+        card.style.setProperty('--mouse-x', ((e.clientX - rect.left) / rect.width) * 100 + '%');
+        card.style.setProperty('--mouse-y', ((e.clientY - rect.top) / rect.height) * 100 + '%');
+      });
+    });
+    initHoverSounds();
+  }
+
+  /* ========================================
+     BACK TO TOP — TELEPORT
+     ======================================== */
+  const backToTop = document.getElementById('back-to-top');
+
+  window.addEventListener('scroll', () => {
+    if (backToTop) {
+      backToTop.classList.toggle('visible', window.scrollY > 400);
+    }
+  }, { passive: true });
+
+  if (backToTop) {
+    backToTop.addEventListener('click', () => {
+      backToTop.classList.add('teleporting');
+      setTimeout(() => {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }, 200);
+      setTimeout(() => {
+        backToTop.classList.remove('teleporting');
+      }, 700);
+    });
+  }
+
+  /* ========================================
+     CLICK RIPPLE EFFECT
+     ======================================== */
+  const rippleContainer = document.getElementById('click-ripple');
+
+  document.addEventListener('click', (e) => {
+    if (!rippleContainer) return;
+    if (e.target.closest('a, button, input, .terminal, .nav')) return;
+    const ripple = document.createElement('div');
+    ripple.className = 'ripple';
+    ripple.style.left = e.clientX + 'px';
+    ripple.style.top = e.clientY + 'px';
+    rippleContainer.appendChild(ripple);
+    setTimeout(() => ripple.remove(), 900);
+  });
+
+  /* ========================================
+     GLITCH ON FAST SCROLL
+     ======================================== */
+  const glitchOverlay = document.getElementById('glitch-overlay');
+  let lastScrollY = window.scrollY;
+  let glitchTimeout = null;
+
+  window.addEventListener('scroll', () => {
+    if (!glitchOverlay) return;
+    const delta = Math.abs(window.scrollY - lastScrollY);
+    lastScrollY = window.scrollY;
+    if (delta > 120) {
+      glitchOverlay.classList.add('active');
+      clearTimeout(glitchTimeout);
+      glitchTimeout = setTimeout(() => glitchOverlay.classList.remove('active'), 200);
+    }
+  }, { passive: true });
+
+  /* ========================================
+     HOVER SOUNDS (Web Audio API)
+     ======================================== */
+  let audioCtx = null;
+  let soundEnabled = false;
+  const soundToggle = document.getElementById('sound-toggle');
+  const soundOnIcon = document.getElementById('sound-on-icon');
+  const soundOffIcon = document.getElementById('sound-off-icon');
+
+  function playHoverSound() {
+    if (!soundEnabled || !audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(800 + Math.random() * 400, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(1200, audioCtx.currentTime + 0.06);
+    gain.gain.setValueAtTime(0.06, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.1);
+  }
+
+  function playClickSound() {
+    if (!soundEnabled || !audioCtx) return;
+    const osc = audioCtx.createOscillator();
+    const gain = audioCtx.createGain();
+    osc.connect(gain);
+    gain.connect(audioCtx.destination);
+    osc.type = 'square';
+    osc.frequency.setValueAtTime(600, audioCtx.currentTime);
+    osc.frequency.exponentialRampToValueAtTime(200, audioCtx.currentTime + 0.08);
+    gain.gain.setValueAtTime(0.04, audioCtx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.1);
+    osc.start(audioCtx.currentTime);
+    osc.stop(audioCtx.currentTime + 0.1);
+  }
+
+  if (soundToggle) {
+    soundToggle.addEventListener('click', () => {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      soundEnabled = !soundEnabled;
+      soundToggle.classList.toggle('active', soundEnabled);
+      if (soundOnIcon) soundOnIcon.style.display = soundEnabled ? 'block' : 'none';
+      if (soundOffIcon) soundOffIcon.style.display = soundEnabled ? 'none' : 'block';
+      if (soundEnabled) playClickSound();
+    });
+  }
+
+  // Attach hover sounds to interactive elements
+  function initHoverSounds() {
+    document.querySelectorAll('a, button, .btn, .tech__item, .about__card, .project-card, .team-card').forEach((el) => {
+      el.addEventListener('mouseenter', playHoverSound);
+    });
+    document.querySelectorAll('a, button, .btn').forEach((el) => {
+      el.addEventListener('click', playClickSound);
+    });
+  }
+  initHoverSounds();
+
+  /* ========================================
+     SECRET SECTION (terminal command)
+     ======================================== */
+  const secretSection = document.getElementById('secret');
+  const secretClose = document.getElementById('secret-close');
+
+  TERM_COMMANDS.secret = () => {
+    if (secretSection) {
+      secretSection.style.display = 'block';
+      secretSection.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    }
+    return [
+      { text: 'Accessing classified data...', cls: 'terminal__output-line--accent' },
+      { text: '  ███████╗██╗   ██╗███████╗', cls: 'terminal__output-line--accent' },
+      { text: '  ██╔════╝╚██╗ ██╔╝██╔════╝', cls: 'terminal__output-line--accent' },
+      { text: '  ███████╗ ╚████╔╝ ███████╗', cls: 'terminal__output-line--accent' },
+      { text: '  ╚════██║  ╚██╔╝  ╚════██║', cls: 'terminal__output-line--accent' },
+      { text: '  ███████║   ██║   ███████║', cls: 'terminal__output-line--accent' },
+      { text: '  ╚══════╝   ╚═╝   ╚══════╝', cls: 'terminal__output-line--accent' },
+      { text: '  ↓ Secret section unlocked below! ↓', cls: 'terminal__output-line--success' },
+    ];
+  };
+
+  if (secretClose) {
+    secretClose.addEventListener('click', () => {
+      secretSection.style.display = 'none';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+  }
+
+  /* ========================================
+     COPY EMAIL TOAST
+     ======================================== */
+  document.querySelectorAll('.copy-email').forEach((el) => {
+    el.addEventListener('click', (e) => {
+      e.preventDefault();
+      const email = el.dataset.email;
+      if (!email) return;
+      navigator.clipboard.writeText(email).then(() => {
+        const toast = document.getElementById('toast');
+        const toastText = document.getElementById('toast-text');
+        if (toast && toastText) {
+          toastText.textContent = email + ' copied!';
+          toast.classList.add('show');
+          setTimeout(() => toast.classList.remove('show'), 2500);
+        }
+      });
+    });
+  });
+
+  /* ========================================
+     STAR FIELD (3D parallax)
+     ======================================== */
+  const starCanvas = document.getElementById('star-field');
+  if (starCanvas) {
+    const sCtx = starCanvas.getContext('2d');
+    let sw, sh;
+    let stars = [];
+    const STAR_COUNT = 200;
+    let starMouseX = 0, starMouseY = 0;
+
+    document.addEventListener('mousemove', (e) => {
+      starMouseX = (e.clientX / window.innerWidth - 0.5) * 2;
+      starMouseY = (e.clientY / window.innerHeight - 0.5) * 2;
+    });
+
+    function initStars() {
+      sw = starCanvas.width = window.innerWidth;
+      sh = starCanvas.height = window.innerHeight;
+      stars = [];
+      for (let i = 0; i < STAR_COUNT; i++) {
+        stars.push({
+          x: Math.random() * sw - sw / 2,
+          y: Math.random() * sh - sh / 2,
+          z: Math.random() * 1200 + 200,
+          size: Math.random() * 1.5 + 0.3,
+          hue: Math.random() > 0.8 ? 270 : 185,
+        });
+      }
+    }
+
+    function drawStars() {
+      sCtx.clearRect(0, 0, sw, sh);
+      const cx = sw / 2;
+      const cy = sh / 2;
+      stars.forEach((s) => {
+        const px = (s.x + starMouseX * 30 * (1 - s.z / 1400)) * (800 / s.z) + cx;
+        const py = (s.y + starMouseY * 30 * (1 - s.z / 1400)) * (800 / s.z) + cy;
+        const alpha = Math.max(0, Math.min(1, 1 - s.z / 1400)) * 0.8;
+        const r = s.size * (800 / s.z);
+        sCtx.beginPath();
+        sCtx.arc(px, py, Math.max(r, 0.3), 0, Math.PI * 2);
+        sCtx.fillStyle = `hsla(${s.hue}, 100%, 75%, ${alpha})`;
+        sCtx.fill();
+        s.z -= 0.4;
+        if (s.z < 1) {
+          s.z = 1200 + Math.random() * 200;
+          s.x = Math.random() * sw - sw / 2;
+          s.y = Math.random() * sh - sh / 2;
+        }
+      });
+      requestAnimationFrame(drawStars);
+    }
+
+    initStars();
+    drawStars();
+    window.addEventListener('resize', initStars);
+  }
+
+  /* ========================================
+     NEON TRAIL CURSOR
+     ======================================== */
+  const neonCanvas = document.getElementById('neon-trail');
+  if (neonCanvas) {
+    const nCtx = neonCanvas.getContext('2d');
+    let nw, nh;
+    let trail = [];
+    const TRAIL_MAX = 25;
+
+    function resizeNeon() {
+      nw = neonCanvas.width = window.innerWidth;
+      nh = neonCanvas.height = window.innerHeight;
+    }
+
+    document.addEventListener('mousemove', (e) => {
+      trail.push({ x: e.clientX, y: e.clientY, age: 0 });
+      if (trail.length > TRAIL_MAX) trail.shift();
+    });
+
+    function drawTrail() {
+      nCtx.clearRect(0, 0, nw, nh);
+      for (let i = 0; i < trail.length; i++) {
+        trail[i].age++;
+        const t = trail[i];
+        const progress = i / trail.length;
+        const alpha = (1 - progress) * 0.6 * Math.max(0, 1 - t.age / 30);
+        const radius = 3 + progress * 8;
+        if (alpha <= 0) continue;
+        nCtx.beginPath();
+        nCtx.arc(t.x, t.y, radius, 0, Math.PI * 2);
+        nCtx.fillStyle = `rgba(0, 240, 255, ${alpha})`;
+        nCtx.fill();
+        nCtx.beginPath();
+        nCtx.arc(t.x, t.y, radius * 0.5, 0, Math.PI * 2);
+        nCtx.fillStyle = `rgba(168, 85, 247, ${alpha * 0.6})`;
+        nCtx.fill();
+      }
+      trail = trail.filter((t) => t.age < 30);
+      requestAnimationFrame(drawTrail);
+    }
+
+    resizeNeon();
+    drawTrail();
+    window.addEventListener('resize', resizeNeon);
+  }
+
+  /* ========================================
+     KONAMI CODE (glitch mode)
+     ======================================== */
+  const KONAMI = [38,38,40,40,37,39,37,39,66,65];
+  let konamiIndex = 0;
+  let glitchModeActive = false;
+
+  document.addEventListener('keydown', (e) => {
+    if (e.keyCode === KONAMI[konamiIndex]) {
+      konamiIndex++;
+      if (konamiIndex === KONAMI.length) {
+        konamiIndex = 0;
+        glitchModeActive = !glitchModeActive;
+        document.body.classList.toggle('glitch-mode', glitchModeActive);
+        const badge = document.getElementById('glitch-badge');
+        if (badge) {
+          badge.classList.toggle('show', glitchModeActive);
+          if (glitchModeActive) setTimeout(() => badge.classList.remove('show'), 3000);
+        }
+        if (glitchModeActive) {
+          document.documentElement.style.filter = 'invert(1) hue-rotate(180deg)';
+          setTimeout(() => { document.documentElement.style.filter = ''; }, 5000);
+        } else {
+          document.documentElement.style.filter = '';
+        }
+      }
+    } else {
+      konamiIndex = 0;
+    }
+  });
+
+  // Glitch command via terminal
+  TERM_COMMANDS.glitch = () => {
+    glitchModeActive = !glitchModeActive;
+    document.body.classList.toggle('glitch-mode', glitchModeActive);
+    const badge = document.getElementById('glitch-badge');
+    if (badge) {
+      badge.classList.toggle('show', glitchModeActive);
+      if (glitchModeActive) setTimeout(() => badge.classList.remove('show'), 3000);
+    }
+    if (glitchModeActive) {
+      document.documentElement.style.filter = 'invert(1) hue-rotate(180deg)';
+      setTimeout(() => { document.documentElement.style.filter = ''; }, 5000);
+    } else {
+      document.documentElement.style.filter = '';
+    }
+    return [
+      { text: glitchModeActive ? 'GLITCH MODE: ACTIVATED' : 'GLITCH MODE: DEACTIVATED', cls: 'terminal__output-line--accent' },
+      { text: glitchModeActive ? '  Inverting colors for 5 seconds...' : '  Colors restored.' },
+    ];
+  };
+
+  /* ========================================
+     DRAG TO EXPLORE (tech stack)
+     ======================================== */
+  const techGrid = document.getElementById('tech-grid');
+  if (techGrid) {
+    let dragSrc = null;
+    techGrid.addEventListener('dragstart', (e) => {
+      const item = e.target.closest('.tech__item');
+      if (!item) return;
+      dragSrc = item;
+      item.classList.add('dragging');
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', '');
+    });
+    techGrid.addEventListener('dragover', (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const item = e.target.closest('.tech__item');
+      if (item && item !== dragSrc) item.classList.add('drag-over');
+    });
+    techGrid.addEventListener('dragleave', (e) => {
+      const item = e.target.closest('.tech__item');
+      if (item) item.classList.remove('drag-over');
+    });
+    techGrid.addEventListener('drop', (e) => {
+      e.preventDefault();
+      const target = e.target.closest('.tech__item');
+      if (target && dragSrc && target !== dragSrc) {
+        const allItems = [...techGrid.querySelectorAll('.tech__item')];
+        const srcIdx = allItems.indexOf(dragSrc);
+        const tgtIdx = allItems.indexOf(target);
+        if (srcIdx < tgtIdx) {
+          techGrid.insertBefore(dragSrc, target.nextSibling);
+        } else {
+          techGrid.insertBefore(dragSrc, target);
+        }
+      }
+      techGrid.querySelectorAll('.tech__item').forEach((el) => {
+        el.classList.remove('dragging', 'drag-over');
+      });
+    });
+    techGrid.addEventListener('dragend', () => {
+      techGrid.querySelectorAll('.tech__item').forEach((el) => {
+        el.classList.remove('dragging', 'drag-over');
+      });
     });
   }
 
