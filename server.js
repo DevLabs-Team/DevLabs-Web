@@ -246,6 +246,40 @@ app.get('/api/members', async (req, res) => {
   }
 });
 
+/* ── Profile README (rendered as a GitHub embed) ── */
+app.get('/api/readme/:user', async (req, res) => {
+  try {
+    const user = encodeURIComponent(String(req.params.user || '').replace(/[^a-zA-Z0-9-]/g, ''));
+    if (!user) return res.status(400).json({ error: 'missing user', html: null });
+
+    // 1) Fetch the <user>/<user> profile repo's README (raw markdown)
+    let md = '';
+    const token = MEMBER_TOKEN || (req.session.user && req.session.user.token);
+    try {
+      const readme = await githubGet('/repos/' + user + '/' + user + '/readme', token);
+      if (readme && readme.content) {
+        md = Buffer.from(readme.content.replace(/\s/g, ''), 'base64').toString('utf8');
+      }
+    } catch (e) {
+      return res.status(404).json({ error: 'no readme', html: null, detail: String(e.message || e) });
+    }
+    if (!md) return res.status(404).json({ error: 'no content', html: null });
+
+    // 2) Render via GitHub's official markdown API (GFM) — returns clean HTML
+    let html = md;
+    try {
+      html = await githubPost('/markdown', { text: md, mode: 'gfm' }, token);
+    } catch (e) {
+      return res.status(502).json({ error: 'render failed', html: null, detail: String(e.message || e) });
+    }
+
+    res.json({ html: html, error: null });
+  } catch (e) {
+    console.error('Readme error:', e);
+    res.status(500).json({ error: 'server error', html: null, detail: String(e.message || e) });
+  }
+});
+
 /* ── Posts (actualizaciones) ── */
 app.get('/api/posts', async (req, res) => {
   try {
