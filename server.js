@@ -185,43 +185,53 @@ app.get('/auth/me', (req, res) => {
 });
 
 /* ── Members (equipo) ── */
+const MEMBER_TOKEN = process.env.GITHUB_TOKEN || null;
+
+async function refreshMembers(token) {
+  let members = await githubGet('/orgs/' + GITHUB.org + '/members?per_page=100', token);
+  if (!Array.isArray(members)) return;
+  const now = new Date().toISOString();
+  for (const m of members) {
+    if (!m || !m.login) continue;
+    await pool.query(
+      `INSERT INTO members (login, avatar_url, name, updated_at)
+       VALUES ($1, $2, $3, $4)
+       ON CONFLICT (login) DO UPDATE SET avatar_url = $2, updated_at = $4`,
+      [m.login, m.avatar_url || '', m.login, now]
+    );
+  }
+  const logins = members.filter(m => m && m.login).map(m => m.login);
+  await pool.query(`DELETE FROM members WHERE login <> ALL($1::text[])`, [logins]);
+}
+
 app.get('/api/members', async (req, res) => {
   try {
     await ensureTables();
     let refreshed = false;
 
-    if (req.session.user && req.session.user.token) {
+    // 1) Prefer server-level token (works for everyone, no session needed)
+    if (MEMBER_TOKEN) {
       try {
-        let members = await githubGet('/orgs/' + GITHUB.org + '/members?per_page=100', req.session.user.token);
-        if (Array.isArray(members)) {
-          const now = new Date().toISOString();
-          for (const m of members) {
-            if (!m || !m.login) continue;
-            await pool.query(
-              `INSERT INTO members (login, avatar_url, name, updated_at)
-               VALUES ($1, $2, $3, $4)
-               ON CONFLICT (login) DO UPDATE SET avatar_url = $2, updated_at = $4`,
-              [m.login, m.avatar_url || '', m.login, now]
-            );
-          }
-          const logins = members.filter(m => m && m.login).map(m => m.login);
-          await pool.query(`DELETE FROM members WHERE login <> ALL($1::text[])`, [logins]);
-          refreshed = true;
-        }
+        await refreshMembers(MEMBER_TOKEN);
+        refreshed = true;
       } catch (e) {
-        console.error('Member refresh error:', e.message);
+        console.error('Member refresh (server token) error:', e.message);
       }
     }
 
-    if (!refreshed) {
-      const { rows } = await pool.query('SELECT login, avatar_url, name FROM members ORDER BY updated_at DESC');
-      if (rows.length) return res.json(rows);
+    // 2) Fallback: use the logged-in owner's token
+    if (!MEMBER_TOKEN && req.session.user && req.session.user.token) {
+      try {
+        await refreshMembers(req.session.user.token);
+        refreshed = true;
+      } catch (e) {
+        console.error('Member refresh (session token) error:', e.message);
+      }
     }
 
+    // 3) Serve from cache to anyone
     const { rows } = await pool.query('SELECT login, avatar_url, name FROM members ORDER BY updated_at DESC');
-    if (rows.length) return res.json(rows);
-
-    res.json([]);
+    res.json(rows);
   } catch (e) {
     console.error('Members error:', e);
     res.status(500).json({ error: 'DB error' });
