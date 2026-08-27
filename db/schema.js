@@ -30,13 +30,6 @@ CREATE TABLE IF NOT EXISTS polls (
   created_at TEXT NOT NULL
 );
 
-CREATE TABLE IF NOT EXISTS session (
-  sid varchar NOT NULL COLLATE "default",
-  sess json NOT NULL,
-  expire timestamp(6) NOT NULL
-);
-ALTER TABLE session ADD CONSTRAINT session_pkey PRIMARY KEY (sid);
-
 CREATE TABLE IF NOT EXISTS members (
   login TEXT PRIMARY KEY,
   avatar_url TEXT DEFAULT '',
