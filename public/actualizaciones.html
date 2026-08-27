@@ -95,9 +95,10 @@
         return;
       }
       if (countEl) countEl.textContent = posts.length;
-      grid.innerHTML = posts.map(function(p) {
+      grid.innerHTML = posts.map(function(p, idx) {
         var date = new Date(p.createdAt).toLocaleDateString('es-ES', { day:'numeric', month:'long', year:'numeric' });
-        return '<article class="post-card reveal-up">' +
+        var contentHtml = p.content.replace(/\n/g, '<br>');
+        return '<article class="post-card reveal-up" data-idx="' + idx + '" role="button" tabindex="0" aria-label="Abrir: ' + p.title + '">' +
           '<div class="post-card__glow"></div>' +
           '<div class="post-card__header">' +
             '<img class="post-card__avatar" src="' + p.authorAvatar + '" alt="' + p.author + '">' +
@@ -108,11 +109,38 @@
           '</div>' +
           (p.project ? '<div class="post-card__project"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> ' + p.project + '</div>' : '') +
           '<h2 class="post-card__title">' + p.title + '</h2>' +
-          '<div class="post-card__content">' + p.content.replace(/\n/g, '<br>') + '</div>' +
-          (p.repoUrl ? '<a href="' + p.repoUrl + '" target="_blank" class="post-card__link magnetic" data-strength="10"><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> Ver repositorio</a>' : '') +
+          '<div class="post-card__content post-card__content--preview">' + contentHtml + '</div>' +
+          '<div class="post-card__footer">' +
+            (p.repoUrl ? '<a href="' + p.repoUrl + '" target="_blank" class="post-card__link magnetic" data-strength="10" data-stop><svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> Ver repositorio</a>' : '') +
+            '<span class="post-card__readmore"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg> Leer m&aacute;s</span>' +
+          '</div>' +
         '</article>';
       }).join('');
       grid.querySelectorAll('.reveal-up').forEach(function(el) { el.classList.add('visible'); });
+      grid.querySelectorAll('.post-card').forEach(function(card) {
+        var post = posts[parseInt(card.dataset.idx)];
+        var contentHtml = post.content.replace(/\n/g, '<br>');
+        function openModal() {
+          window.openNewsModal({
+            tag: 'Actualizaci&oacute;n',
+            tagColor: '#0066cc',
+            author: post.author,
+            avatar: post.authorAvatar,
+            date: new Date(post.createdAt).toLocaleDateString('es-ES', { day:'numeric', month:'long', year:'numeric' }),
+            project: post.project,
+            title: post.title,
+            content: contentHtml,
+            link: post.repoUrl || ''
+          });
+        }
+        card.addEventListener('click', function(e) {
+          if (e.target.closest('[data-stop]')) return;
+          openModal();
+        });
+        card.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openModal(); }
+        });
+      });
     }).catch(function() {
       grid.innerHTML = '<p class="repos-empty">Error al cargar actualizaciones.</p>';
     });

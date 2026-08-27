@@ -1426,3 +1426,59 @@
   });
 
 })();
+
+/* ── Newsroom-style article modal (global) ── */
+window.openNewsModal = (function() {
+  return function openNewsModal(opts) {
+    opts = opts || {};
+    if (document.getElementById('news-modal')) { closeNewsModal(); }
+
+    function closeNewsModal() {
+      var m = document.getElementById('news-modal');
+      if (!m) return;
+      m.classList.add('news-modal--closing');
+      setTimeout(function() { if (m && m.parentNode) m.parentNode.removeChild(m); }, 300);
+      document.removeEventListener('keydown', onKey);
+    }
+    function onKey(e) { if (e.key === 'Escape') closeNewsModal(); }
+
+    var modal = document.createElement('div');
+    modal.className = 'news-modal';
+    modal.id = 'news-modal';
+    modal.innerHTML =
+      '<div class="news-modal__backdrop" data-close></div>' +
+      '<div class="news-modal__panel" role="dialog" aria-modal="true">' +
+        '<button class="news-modal__close" data-close aria-label="Cerrar">' +
+          '<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>' +
+        '</button>' +
+        '<div class="news-modal__scroll">' +
+          '<div class="news-modal__meta">' +
+            (opts.tag ? '<span class="news-modal__tag" style="color:' + (opts.tagColor || '#0066cc') + ';border-color:' + (opts.tagColor || '#0066cc') + '30;background:' + (opts.tagColor || '#0066cc') + '15">' + opts.tag + '</span>' : '') +
+            '<div class="news-modal__author-row">' +
+              '<img class="news-modal__avatar" src="' + opts.avatar + '" alt="' + opts.author + '">' +
+              '<div class="news-modal__author-info">' +
+                '<span class="news-modal__author">@' + opts.author + '</span>' +
+                '<span class="news-modal__date">' + opts.date + '</span>' +
+              '</div>' +
+            '</div>' +
+          '</div>' +
+          (opts.project ? '<div class="news-modal__project">' +
+            '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg> ' + opts.project +
+          '</div>' : '') +
+          '<h1 class="news-modal__title">' + opts.title + '</h1>' +
+          '<div class="news-modal__body">' + opts.content + '</div>' +
+          (opts.link ? '<a href="' + opts.link + '" target="_blank" class="news-modal__link magnetic" data-strength="10">' +
+            '<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg> Ver repositorio</a>' : '') +
+        '</div>' +
+      '</div>';
+
+    document.body.appendChild(modal);
+
+    modal.querySelectorAll('[data-close]').forEach(function(el) {
+      el.addEventListener('click', closeNewsModal);
+    });
+    document.addEventListener('keydown', onKey);
+
+    requestAnimationFrame(function() { modal.classList.add('news-modal--open'); });
+  };
+})();

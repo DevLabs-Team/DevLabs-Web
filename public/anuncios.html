@@ -108,13 +108,16 @@
         annGrid.innerHTML = '<div class="updates-empty visible"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><p>No hay anuncios a&uacute;n.</p></div>';
         return;
       }
-      annGrid.innerHTML = anns.map(function(a) {
+      annGrid.innerHTML = anns.map(function(a, idx) {
         var date = new Date(a.createdAt).toLocaleDateString('es-ES', { day:'numeric', month:'long', year:'numeric' });
         var typeColors = { 'general': 'var(--accent)', 'new-member': '#27c93f', 'milestone': 'var(--accent-secondary)' };
         var typeLabels = { 'general': 'General', 'new-member': 'Nueva incorporaci\u00f3n', 'milestone': 'Hito alcanzado' };
-        return '<article class="announcement-card reveal-up">' +
+        var tag = typeLabels[a.type] || typeLabels.general;
+        var tagColor = (typeColors[a.type] || typeColors.general).replace('var(--accent)', '#0066cc').replace('var(--accent-secondary)', '#7b2ff7');
+        var contentHtml = a.content.replace(/\n/g, '<br>');
+        return '<article class="announcement-card reveal-up" data-idx="' + idx + '" role="button" tabindex="0" aria-label="Abrir: ' + a.title + '">' +
           '<div class="announcement-card__glow"></div>' +
-          '<div class="announcement-card__type" style="background:' + (typeColors[a.type] || typeColors.general) + '15;color:' + (typeColors[a.type] || typeColors.general) + ';border-color:' + (typeColors[a.type] || typeColors.general) + '30">' + (typeLabels[a.type] || typeLabels.general) + '</div>' +
+          '<div class="announcement-card__type" style="background:' + (typeColors[a.type] || typeColors.general) + '15;color:' + (typeColors[a.type] || typeColors.general) + ';border-color:' + (typeColors[a.type] || typeColors.general) + '30">' + tag + '</div>' +
           '<div class="announcement-card__header">' +
             '<img class="announcement-card__avatar" src="' + a.authorAvatar + '" alt="' + a.author + '">' +
             '<div class="announcement-card__meta">' +
@@ -123,100 +126,109 @@
             '</div>' +
           '</div>' +
           '<h3 class="announcement-card__title">' + a.title + '</h3>' +
-          '<div class="announcement-card__content">' + a.content.replace(/\n/g, '<br>') + '</div>' +
+          '<div class="announcement-card__content announcement-card__content--preview">' + contentHtml + '</div>' +
+          '<span class="announcement-card__readmore"><svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="2"><path d="M5 12h14M12 5l7 7-7 7"/></svg> Leer m&aacute;s</span>' +
         '</article>';
       }).join('');
       annGrid.querySelectorAll('.reveal-up').forEach(function(el) { el.classList.add('visible'); });
+      annGrid.querySelectorAll('.announcement-card').forEach(function(card) {
+        var ann = anns[parseInt(card.dataset.idx)];
+        var tag = (typeLabels[ann.type] || typeLabels.general);
+        var tagColor = (typeColors[ann.type] || typeColors.general).replace('var(--accent)', '#0066cc').replace('var(--accent-secondary)', '#7b2ff7');
+        function openModal() {
+          window.openNewsModal({
+            tag: tag,
+            tagColor: tagColor,
+            author: ann.author,
+            avatar: ann.authorAvatar,
+            date: new Date(ann.createdAt).toLocaleDateString('es-ES', { day:'numeric', month:'long', year:'numeric' }),
+            title: ann.title,
+            content: ann.content.replace(/\n/g, '<br>')
+          });
+        }
+        card.addEventListener('click', openModal);
+        card.addEventListener('keydown', function(e) {
+          if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openModal(); }
+        });
+      });
     });
 
-    fetch('/api/polls').then(function(r){ return r.json(); }).then(function(polls) {
-      if (!polls.length) {
-        pollGrid.innerHTML = '<div class="updates-empty visible"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><p>No hay encuestas activas.</p></div>';
-        return;
-      }
-      pollGrid.innerHTML = polls.map(function(poll) {
-        var totalVotes = poll.options.reduce(function(s, o) { return s + o.votes; }, 0);
-        var user = window.DevLabsAuth && window.DevLabsAuth.getUser();
-        var hasVoted = user && poll.voters.indexOf(user.login) !== -1;
-        var date = new Date(poll.createdAt).toLocaleDateString('es-ES', { day:'numeric', month:'long', year:'numeric' });
+    function markVoted(pollId) {
+      var voted = JSON.parse(localStorage.getItem('devlabs_voted_polls') || '[]');
+      if (voted.indexOf(pollId) === -1) { voted.push(pollId); localStorage.setItem('devlabs_voted_polls', JSON.stringify(voted)); }
+    }
 
-        var optionsHtml = poll.options.map(function(opt, i) {
-          var pct = totalVotes > 0 ? Math.round((opt.votes / totalVotes) * 100) : 0;
-          if (hasVoted || !poll.open) {
-            return '<div class="poll-option poll-option--result">' +
-              '<div class="poll-option__bar" style="width:' + pct + '%"></div>' +
-              '<div class="poll-option__info"><span class="poll-option__text">' + opt.text + '</span><span class="poll-option__count">' + opt.votes + ' (' + pct + '%)</span></div>' +
-            '</div>';
-          }
-          return '<label class="poll-option poll-option--selectable" data-poll="' + poll.id + '" data-index="' + i + '">' +
-            '<input type="radio" name="poll-' + poll.id + '" value="' + i + '">' +
-            '<span class="poll-option__radio"></span>' +
-            '<span class="poll-option__text">' + opt.text + '</span>' +
-          '</label>';
+    function renderPolls() {
+      fetch('/api/polls').then(function(r){ return r.json(); }).then(function(polls) {
+        if (!polls.length) {
+          pollGrid.innerHTML = '<div class="updates-empty visible"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg><p>No hay encuestas activas.</p></div>';
+          return;
+        }
+        var votedPolls = JSON.parse(localStorage.getItem('devlabs_voted_polls') || '[]');
+        pollGrid.innerHTML = polls.map(function(poll) {
+          var totalVotes = poll.options.reduce(function(s, o) { return s + o.votes; }, 0);
+          var hasVoted = votedPolls.indexOf(poll.id) !== -1;
+          var date = new Date(poll.createdAt).toLocaleDateString('es-ES', { day:'numeric', month:'long', year:'numeric' });
+
+          var optionsHtml = poll.options.map(function(opt, i) {
+            var pct = totalVotes > 0 ? Math.round((opt.votes / totalVotes) * 100) : 0;
+            if (hasVoted || !poll.open) {
+              return '<div class="poll-option poll-option--result">' +
+                '<div class="poll-option__bar" style="width:' + pct + '%"></div>' +
+                '<div class="poll-option__info"><span class="poll-option__text">' + opt.text + '</span><span class="poll-option__count">' + opt.votes + ' (' + pct + '%)</span></div>' +
+              '</div>';
+            }
+            return '<label class="poll-option poll-option--selectable" data-poll="' + poll.id + '" data-index="' + i + '">' +
+              '<input type="radio" name="poll-' + poll.id + '" value="' + i + '">' +
+              '<span class="poll-option__radio"></span>' +
+              '<span class="poll-option__text">' + opt.text + '</span>' +
+            '</label>';
+          }).join('');
+
+          var statusClass = poll.open ? 'poll-card--open' : 'poll-card--closed';
+          var statusText = poll.open ? 'Abierta' : 'Cerrada';
+          var voteBtn = (!hasVoted && poll.open) ? '<button class="btn btn--primary btn--sm poll-vote-btn" data-poll="' + poll.id + '">Votar</button>' : '';
+
+          return '<div class="poll-card reveal-up ' + statusClass + '">' +
+            '<div class="poll-card__glow"></div>' +
+            '<div class="poll-card__header">' +
+              '<span class="poll-card__status ' + (poll.open ? 'poll-card__status--open' : 'poll-card__status--closed') + '">' + statusText + '</span>' +
+              '<span class="poll-card__date">' + date + '</span>' +
+            '</div>' +
+            '<h3 class="poll-card__question">' + poll.question + '</h3>' +
+            '<div class="poll-card__options">' + optionsHtml + '</div>' +
+            '<div class="poll-card__footer">' +
+              '<span class="poll-card__total">' + totalVotes + ' voto' + (totalVotes !== 1 ? 's' : '') + '</span>' +
+              voteBtn +
+            '</div>' +
+          '</div>';
         }).join('');
+        pollGrid.querySelectorAll('.reveal-up').forEach(function(el) { el.classList.add('visible'); });
 
-        var statusClass = poll.open ? 'poll-card--open' : 'poll-card--closed';
-        var statusText = poll.open ? 'Abierta' : 'Cerrada';
-        var voteBtn = (!hasVoted && poll.open && user) ? '<button class="btn btn--primary btn--sm poll-vote-btn" data-poll="' + poll.id + '">Votar</button>' : '';
-        var loginMsg = (!user && poll.open) ? '<p class="poll-login-msg">Inicia sesi\u00f3n para votar</p>' : '';
-
-        return '<div class="poll-card reveal-up ' + statusClass + '">' +
-          '<div class="poll-card__glow"></div>' +
-          '<div class="poll-card__header">' +
-            '<span class="poll-card__status ' + (poll.open ? 'poll-card__status--open' : 'poll-card__status--closed') + '">' + statusText + '</span>' +
-            '<span class="poll-card__date">' + date + '</span>' +
-          '</div>' +
-          '<h3 class="poll-card__question">' + poll.question + '</h3>' +
-          '<div class="poll-card__options">' + optionsHtml + '</div>' +
-          '<div class="poll-card__footer">' +
-            '<span class="poll-card__total">' + totalVotes + ' voto' + (totalVotes !== 1 ? 's' : '') + '</span>' +
-            voteBtn + loginMsg +
-          '</div>' +
-        '</div>';
-      }).join('');
-      pollGrid.querySelectorAll('.reveal-up').forEach(function(el) { el.classList.add('visible'); });
-
-      pollGrid.querySelectorAll('.poll-vote-btn').forEach(function(btn) {
-        btn.addEventListener('click', function() {
-          var pollId = btn.dataset.poll;
-          var selected = pollGrid.querySelector('input[name="poll-' + pollId + '"]:checked');
-          if (!selected) return;
-          btn.disabled = true;
-          btn.textContent = 'Votando...';
-          fetch('/api/polls/' + pollId + '/vote', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ optionIndex: parseInt(selected.value) })
-          }).then(function(r) { return r.json(); }).then(function() {
-            fetch('/api/polls').then(function(r){ return r.json(); }).then(function(polls) {
-              pollGrid.innerHTML = '';
-              pollGrid.innerHTML = polls.map(function(poll) {
-                var totalVotes = poll.options.reduce(function(s, o) { return s + o.votes; }, 0);
-                var user2 = window.DevLabsAuth && window.DevLabsAuth.getUser();
-                var hasVoted2 = user2 && poll.voters.indexOf(user2.login) !== -1;
-                var date2 = new Date(poll.createdAt).toLocaleDateString('es-ES', { day:'numeric', month:'long', year:'numeric' });
-                var optionsHtml2 = poll.options.map(function(opt) {
-                  var pct = totalVotes > 0 ? Math.round((opt.votes / totalVotes) * 100) : 0;
-                  return '<div class="poll-option poll-option--result">' +
-                    '<div class="poll-option__bar" style="width:' + pct + '%"></div>' +
-                    '<div class="poll-option__info"><span class="poll-option__text">' + opt.text + '</span><span class="poll-option__count">' + opt.votes + ' (' + pct + '%)</span></div>' +
-                  '</div>';
-                }).join('');
-                var statusClass = poll.open ? 'poll-card--open' : 'poll-card--closed';
-                var statusText = poll.open ? 'Abierta' : 'Cerrada';
-                return '<div class="poll-card ' + statusClass + '">' +
-                  '<div class="poll-card__glow"></div>' +
-                  '<div class="poll-card__header"><span class="poll-card__status ' + (poll.open ? 'poll-card__status--open' : 'poll-card__status--closed') + '">' + statusText + '</span><span class="poll-card__date">' + date2 + '</span></div>' +
-                  '<h3 class="poll-card__question">' + poll.question + '</h3>' +
-                  '<div class="poll-card__options">' + optionsHtml2 + '</div>' +
-                  '<div class="poll-card__footer"><span class="poll-card__total">' + totalVotes + ' voto' + (totalVotes !== 1 ? 's' : '') + '</span></div>' +
-                '</div>';
-              }).join('');
+        pollGrid.querySelectorAll('.poll-vote-btn').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            var pollId = btn.dataset.poll;
+            var selected = pollGrid.querySelector('input[name="poll-' + pollId + '"]:checked');
+            if (!selected) return;
+            btn.disabled = true;
+            btn.textContent = 'Votando...';
+            fetch('/api/polls/' + pollId + '/vote', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ optionIndex: parseInt(selected.value) })
+            }).then(function(r) { return r.json(); }).then(function(poll) {
+              if (poll && poll.id) markVoted(poll.id);
+              renderPolls();
+            }).catch(function() {
+              btn.disabled = false;
+              btn.textContent = 'Votar';
             });
           });
         });
       });
-    });
+    }
+
+    renderPolls();
   })();
   </script>
 </body>

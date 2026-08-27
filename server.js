@@ -110,6 +110,21 @@ function ensureTables() {
   return tablesReady;
 }
 
+/* ── Lightweight cookie helpers (anonymous per-browser identity) ── */
+function readCookie(req, name) {
+  const h = req.headers.cookie;
+  if (!h) return null;
+  const m = new RegExp('(?:^|;\\s*)' + name + '=([^;]*)').exec(h);
+  return m ? decodeURIComponent(m[1]) : null;
+}
+function getOrCreateVoterId(req, res) {
+  const existing = readCookie(req, 'devlabs_voter');
+  if (existing) return existing;
+  const id = 'v_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 12);
+  res.setHeader('Set-Cookie', 'devlabs_voter=' + encodeURIComponent(id) + '; Path=/; HttpOnly; SameSite=Lax; Max-Age=' + (365 * 24 * 3600));
+  return id;
+}
+
 async function query(text, params) {
   await ensureTables();
   return pool.query(text, params);
@@ -300,7 +315,7 @@ app.post('/api/posts', async (req, res) => {
     );
     const row = rows[0];
     res.json({ ...row, repoUrl: row.repo_url, authorAvatar: row.author_avatar, createdAt: row.created_at });
-  } catch (e) { console.error(e); res.status(500).json({ error: 'DB error' }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'DB error', detail: String(e.message || e) }); }
 });
 
 app.delete('/api/posts/:id', async (req, res) => {
@@ -312,7 +327,7 @@ app.delete('/api/posts/:id', async (req, res) => {
     if (req.session.user.role !== 'owner' && post.author !== req.session.user.login) return res.status(403).json({ error: 'Forbidden' });
     await query('DELETE FROM posts WHERE id = $1', [req.params.id]);
     res.json({ ok: true });
-  } catch (e) { console.error(e); res.status(500).json({ error: 'DB error' }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'DB error', detail: String(e.message || e) }); }
 });
 
 /* ── Announcements (anuncios) ── */
@@ -335,7 +350,7 @@ app.post('/api/announcements', async (req, res) => {
     );
     const row = rows[0];
     res.json({ ...row, authorAvatar: row.author_avatar, createdAt: row.created_at });
-  } catch (e) { console.error(e); res.status(500).json({ error: 'DB error' }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'DB error', detail: String(e.message || e) }); }
 });
 
 app.delete('/api/announcements/:id', async (req, res) => {
@@ -366,23 +381,23 @@ app.post('/api/polls', async (req, res) => {
     );
     const row = rows[0];
     res.json({ ...row, createdAt: row.created_at, voters: row.voters || [], options: row.options || [] });
-  } catch (e) { console.error(e); res.status(500).json({ error: 'DB error' }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'DB error', detail: String(e.message || e) }); }
 });
 
 app.post('/api/polls/:id/vote', async (req, res) => {
-  if (!req.session.user) return res.status(401).json({ error: 'Not authenticated' });
+  const voterId = getOrCreateVoterId(req, res);
   const { optionIndex } = req.body;
   try {
     const { rows } = await query('SELECT * FROM polls WHERE id = $1', [req.params.id]);
     if (!rows.length) return res.status(404).json({ error: 'Not found' });
     const poll = rows[0];
     if (!poll.open) return res.status(400).json({ error: 'Poll closed' });
-    if (poll.voters.includes(req.session.user.login)) return res.status(400).json({ error: 'Already voted' });
+    if (poll.voters.includes(voterId)) return res.status(400).json({ error: 'Already voted' });
     if (typeof optionIndex !== 'number' || optionIndex < 0 || optionIndex >= poll.options.length) return res.status(400).json({ error: 'Invalid option' });
 
     const options = poll.options.slice();
     options[optionIndex].votes++;
-    const voters = poll.voters.concat(req.session.user.login);
+    const voters = poll.voters.concat(voterId);
 
     const { rows: updated } = await query(
       `UPDATE polls SET options = $2::jsonb, voters = $3::jsonb WHERE id = $1 RETURNING *`,
@@ -390,7 +405,7 @@ app.post('/api/polls/:id/vote', async (req, res) => {
     );
     const row = updated[0];
     res.json({ ...row, createdAt: row.created_at, voters: row.voters || [], options: row.options || [] });
-  } catch (e) { console.error(e); res.status(500).json({ error: 'DB error' }); }
+  } catch (e) { console.error(e); res.status(500).json({ error: 'DB error', detail: String(e.message || e) }); }
 });
 
 app.post('/api/polls/:id/close', async (req, res) => {
