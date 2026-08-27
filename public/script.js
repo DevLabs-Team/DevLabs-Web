@@ -907,7 +907,8 @@
   if (teamGrid) {
     fetch('/api/members')
       .then((r) => r.json())
-      .then((members) => {
+      .then((data) => {
+        const members = Array.isArray(data) ? data : (data && data.members) || [];
         if (!Array.isArray(members) || members.length === 0) {
           teamGrid.innerHTML = `
             <div class="team-card reveal-up" style="text-align:center; grid-column:1/-1;">

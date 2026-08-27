@@ -208,13 +208,21 @@ app.get('/api/members', async (req, res) => {
   try {
     await ensureTables();
     let refreshed = false;
+    let detail = '';
 
     // 1) Prefer server-level token (works for everyone, no session needed)
     if (MEMBER_TOKEN) {
       try {
-        await refreshMembers(MEMBER_TOKEN);
-        refreshed = true;
+        const dbg = await githubGet('/orgs/' + GITHUB.org + '/members?per_page=100', MEMBER_TOKEN);
+        if (Array.isArray(dbg)) {
+          await refreshMembers(MEMBER_TOKEN);
+          refreshed = true;
+          detail = 'server token: ' + dbg.length + ' members';
+        } else {
+          detail = 'server token returned: ' + JSON.stringify(dbg).slice(0, 200);
+        }
       } catch (e) {
+        detail = 'server token error: ' + (e.message || e);
         console.error('Member refresh (server token) error:', e.message);
       }
     }
@@ -231,7 +239,7 @@ app.get('/api/members', async (req, res) => {
 
     // 3) Serve from cache to anyone
     const { rows } = await pool.query('SELECT login, avatar_url, name FROM members ORDER BY updated_at DESC');
-    res.json(rows);
+    res.json({ members: rows, tokenConfigured: !!MEMBER_TOKEN, refreshed: refreshed, detail: detail });
   } catch (e) {
     console.error('Members error:', e);
     res.status(500).json({ error: 'DB error', detail: String(e.message || e) });
