@@ -184,6 +184,50 @@ app.get('/auth/me', (req, res) => {
   res.json({ login, name, avatar, bio, role });
 });
 
+/* ── Members (equipo) ── */
+app.get('/api/members', async (req, res) => {
+  try {
+    await ensureTables();
+    let refreshed = false;
+
+    if (req.session.user && req.session.user.token) {
+      try {
+        let members = await githubGet('/orgs/' + GITHUB.org + '/members?per_page=100', req.session.user.token);
+        if (Array.isArray(members)) {
+          const now = new Date().toISOString();
+          for (const m of members) {
+            if (!m || !m.login) continue;
+            await pool.query(
+              `INSERT INTO members (login, avatar_url, name, updated_at)
+               VALUES ($1, $2, $3, $4)
+               ON CONFLICT (login) DO UPDATE SET avatar_url = $2, updated_at = $4`,
+              [m.login, m.avatar_url || '', m.login, now]
+            );
+          }
+          const logins = members.filter(m => m && m.login).map(m => m.login);
+          await pool.query(`DELETE FROM members WHERE login <> ALL($1::text[])`, [logins]);
+          refreshed = true;
+        }
+      } catch (e) {
+        console.error('Member refresh error:', e.message);
+      }
+    }
+
+    if (!refreshed) {
+      const { rows } = await pool.query('SELECT login, avatar_url, name FROM members ORDER BY updated_at DESC');
+      if (rows.length) return res.json(rows);
+    }
+
+    const { rows } = await pool.query('SELECT login, avatar_url, name FROM members ORDER BY updated_at DESC');
+    if (rows.length) return res.json(rows);
+
+    res.json([]);
+  } catch (e) {
+    console.error('Members error:', e);
+    res.status(500).json({ error: 'DB error' });
+  }
+});
+
 /* ── Posts (actualizaciones) ── */
 app.get('/api/posts', async (req, res) => {
   try {

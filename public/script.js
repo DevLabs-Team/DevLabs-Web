@@ -905,24 +905,16 @@
      ======================================== */
   const teamGrid = document.getElementById('team-grid');
   if (teamGrid) {
-    fetch('https://api.github.com/orgs/DevLabs-Team/members?per_page=100')
+    fetch('/api/members')
       .then((r) => r.json())
       .then((members) => {
         if (!Array.isArray(members) || members.length === 0) {
-          // Fallback: try public_members endpoint
-          return fetch('https://api.github.com/orgs/DevLabs-Team/public_members?per_page=100')
-            .then((r2) => r2.json())
-            .then((pubMembers) => {
-              if (Array.isArray(pubMembers) && pubMembers.length > 0) {
-                renderTeam(pubMembers);
-              } else {
-                teamGrid.innerHTML = `
-                  <div class="team-card reveal-up" style="text-align:center; grid-column:1/-1;">
-                    <p class="repos-empty">Los miembros del equipo son privados en GitHub.<br>
-                    <span style="color:var(--accent);font-size:0.75rem;">Para que aparezcan aqu&iacute;, cada miembro debe ir a su perfil en la org &rarr; Visibility &rarr; Public.</span></p>
-                  </div>`;
-              }
-            });
+          teamGrid.innerHTML = `
+            <div class="team-card reveal-up" style="text-align:center; grid-column:1/-1;">
+              <p class="repos-empty">Los miembros del equipo son privados en GitHub.<br>
+              <span style="color:var(--accent);font-size:0.75rem;">Para que aparezcan aqu&iacute;, el due&ntilde;o debe iniciar sesi&oacute;n para sincronizar el equipo.</span></p>
+            </div>`;
+          return;
         }
         renderTeam(members);
       })

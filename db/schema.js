@@ -36,6 +36,13 @@ CREATE TABLE IF NOT EXISTS session (
   expire timestamp(6) NOT NULL
 );
 ALTER TABLE session ADD CONSTRAINT session_pkey PRIMARY KEY (sid);
+
+CREATE TABLE IF NOT EXISTS members (
+  login TEXT PRIMARY KEY,
+  avatar_url TEXT DEFAULT '',
+  name TEXT DEFAULT '',
+  updated_at TEXT NOT NULL
+);
 `;
 
 module.exports = SCHEMA;
