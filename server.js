@@ -4,6 +4,7 @@ const https = require('https');
 const path = require('path');
 const { Pool } = require('pg');
 const connectPgSimple = require('connect-pg-simple');
+const SCHEMA = require('./db/schema');
 
 require('dotenv').config ? require('dotenv').config() : null;
 
@@ -98,7 +99,19 @@ function githubPost(urlPath, data, token, host) {
 }
 
 /* ── DB helpers ── */
+let tablesReady = null;
+function ensureTables() {
+  if (!tablesReady) {
+    tablesReady = pool.query(SCHEMA).catch(function (e) {
+      tablesReady = null;
+      throw e;
+    });
+  }
+  return tablesReady;
+}
+
 async function query(text, params) {
+  await ensureTables();
   return pool.query(text, params);
 }
 
