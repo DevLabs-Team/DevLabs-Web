@@ -12,6 +12,7 @@
       if (res.ok) currentUser = await res.json();
     } catch {}
     renderNavAuth();
+    document.dispatchEvent(new CustomEvent('auth-ready', { detail: { user: currentUser } }));
   }
 
   function renderNavAuth() {

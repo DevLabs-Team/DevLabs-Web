@@ -54,10 +54,11 @@
   (function() {
     var page = document.getElementById('admin-page');
     var loading = document.getElementById('admin-loading');
-    var checkInterval = setInterval(function() {
-      if (window.DevLabsAuth) {
-        clearInterval(checkInterval);
-        var user = window.DevLabsAuth.getUser();
+    var booted = false;
+    function boot() {
+      if (booted) return;
+      booted = true;
+      var user = window.DevLabsAuth.getUser();
         if (!user) {
           loading.innerHTML =
             '<div class="member-error">' +
@@ -370,9 +371,10 @@
 
         renderTab('posts');
       }
-    }, 100);
 
-    setTimeout(function() { clearInterval(checkInterval); }, 10000);
+    document.addEventListener('auth-ready', boot);
+    if (window.DevLabsAuth && window.DevLabsAuth.getUser() !== null) boot();
+    setTimeout(function() { if (!booted) boot(); }, 3000);
   })();
   </script>
 </body>
