@@ -142,6 +142,7 @@
             '</div>' +
             '<div class="admin-list" id="posts-list"></div>';
 
+          content.querySelectorAll('.reveal-up').forEach(function(el) { el.classList.add('visible'); });
           document.getElementById('post-author').value = '@' + user.login;
           document.getElementById('post-form').addEventListener('submit', function(e) {
             e.preventDefault();
@@ -232,6 +233,7 @@
             '</div>' +
             '<div class="admin-list" id="ann-list"></div>';
 
+          content.querySelectorAll('.reveal-up').forEach(function(el) { el.classList.add('visible'); });
           document.getElementById('ann-form').addEventListener('submit', function(e) {
             e.preventDefault();
             var submitBtn = document.getElementById('ann-submit');
@@ -291,7 +293,7 @@
               '<form id="poll-form" class="admin-form">' +
                 '<div class="admin-form__field">' +
                   '<label class="admin-form__label">Pregunta *</label>' +
-                  '<input type="text" class="admin-form__input" id="poll-question" placeholder="ej: \u00bfQu\u00e9 proyecto deber\u00edamos hacer接下来?" required>' +
+                  '<input type="text" class="admin-form__input" id="poll-question" placeholder="ej: \u00bfQu\u00e9 proyecto deber\u00edamos hacer a continuaci\u00f3n?" required>' +
                 '</div>' +
                 '<div class="admin-form__field">' +
                   '<label class="admin-form__label">Opciones (m\u00ednimo 2) *</label>' +
@@ -308,6 +310,7 @@
             '</div>' +
             '<div class="admin-list" id="polls-list"></div>';
 
+          content.querySelectorAll('.reveal-up').forEach(function(el) { el.classList.add('visible'); });
           document.getElementById('add-option-btn').addEventListener('click', function() {
             var list = document.getElementById('poll-options-list');
             var count = list.querySelectorAll('.poll-option-input').length + 1;
