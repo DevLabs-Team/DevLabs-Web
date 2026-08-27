@@ -234,7 +234,7 @@ app.get('/api/members', async (req, res) => {
     res.json(rows);
   } catch (e) {
     console.error('Members error:', e);
-    res.status(500).json({ error: 'DB error' });
+    res.status(500).json({ error: 'DB error', detail: String(e.message || e) });
   }
 });
 
