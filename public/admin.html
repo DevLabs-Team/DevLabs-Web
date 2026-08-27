@@ -1,0 +1,379 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel de Control — DevLabs Team</title>
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="tv-overlay" id="tv-overlay"></div>
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-follower" id="cursor-follower"></div>
+  <canvas id="grid-bg"></canvas>
+  <div class="orb orb--1"></div>
+  <div class="orb orb--2"></div>
+
+  <nav class="nav" id="nav">
+    <a href="index.html" class="nav__logo" data-transition="scanline">
+      <span class="nav__logo-bracket">&lt;</span>DL<span class="nav__logo-bracket">/&gt;</span>
+    </a>
+    <div class="nav__links">
+      <a href="index.html" class="nav__link" data-transition="scanline">Inicio</a>
+      <a href="actualizaciones.html" class="nav__link" data-transition="glitch">Actualizaciones</a>
+      <a href="anuncios.html" class="nav__link" data-transition="glitch">Anuncios</a>
+    </div>
+    <div class="nav__actions">
+      <div id="auth-nav"></div>
+    </div>
+  </nav>
+
+  <main class="admin-page" id="admin-page">
+    <div class="admin-loading" id="admin-loading">
+      <div class="member-loading__spinner"></div>
+      <span class="member-loading__text">Verificando permisos...</span>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <div class="footer__divider"></div>
+    <div class="footer__content">
+      <div class="footer__logo"><span class="nav__logo-bracket">&lt;</span>DL<span class="nav__logo-bracket">/&gt;</span></div>
+      <p class="footer__copy">&copy; 2026 DevLabs Team. Todos los derechos reservados.</p>
+      <p class="footer__tagline">Hecho con &#9889; desde Espa&ntilde;a</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+  <script src="auth.js"></script>
+  <script>
+  (function() {
+    var page = document.getElementById('admin-page');
+    var loading = document.getElementById('admin-loading');
+    var checkInterval = setInterval(function() {
+      if (window.DevLabsAuth) {
+        clearInterval(checkInterval);
+        var user = window.DevLabsAuth.getUser();
+        if (!user) {
+          loading.innerHTML =
+            '<div class="member-error">' +
+              '<div class="member-error__code">403</div>' +
+              '<p class="member-error__text">Debes iniciar sesi\u00f3n con GitHub para acceder al panel.</p>' +
+              '<a href="/auth/login" class="btn btn--primary magnetic" data-strength="20">' +
+                '<svg viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>' +
+                ' Iniciar sesi\u00f3n con GitHub' +
+              '</a>' +
+            '</div>';
+          return;
+        }
+
+        var isOwner = user.role === 'owner';
+        var tabsHtml = '<div class="admin-tabs">' +
+          '<button class="admin-tab admin-tab--active" data-tab="posts">Actualizaciones</button>' +
+          (isOwner ? '<button class="admin-tab" data-tab="announcements">Anuncios</button>' : '') +
+          (isOwner ? '<button class="admin-tab" data-tab="polls">Encuestas</button>' : '') +
+        '</div>';
+
+        page.innerHTML =
+          '<div class="admin-page__header reveal-up">' +
+            '<a href="index.html" class="updates-page__back" data-transition="scanline">' +
+              '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg> Volver' +
+            '</a>' +
+            '<h1 class="admin-page__title">Panel de Control</h1>' +
+            '<p class="admin-page__subtitle">Bienvenido, <span style="color:var(--accent)">@' + user.login + '</span> <span class="admin-role-badge">' + user.role + '</span></p>' +
+          '</div>' +
+          tabsHtml +
+          '<div class="admin-content" id="admin-content"></div>';
+
+        page.querySelectorAll('.reveal-up').forEach(function(el) { el.classList.add('visible'); });
+        var content = document.getElementById('admin-content');
+
+        document.querySelectorAll('.admin-tab').forEach(function(tab) {
+          tab.addEventListener('click', function() {
+            document.querySelectorAll('.admin-tab').forEach(function(t) { t.classList.remove('admin-tab--active'); });
+            tab.classList.add('admin-tab--active');
+            renderTab(tab.dataset.tab);
+          });
+        });
+
+        function renderTab(tab) {
+          if (tab === 'posts') renderPostsTab();
+          else if (tab === 'announcements') renderAnnouncementsTab();
+          else if (tab === 'polls') renderPollsTab();
+        }
+
+        /* ── Posts Tab ── */
+        function renderPostsTab() {
+          content.innerHTML =
+            '<div class="admin-form-card reveal-up">' +
+              '<h2 class="admin-form-card__title">Nueva actualizaci\u00f3n</h2>' +
+              '<form id="post-form" class="admin-form">' +
+                '<div class="admin-form__row">' +
+                  '<div class="admin-form__field">' +
+                    '<label class="admin-form__label">Proyecto / Repositorio</label>' +
+                    '<input type="text" class="admin-form__input" id="post-project" placeholder="ej: DevLabs-Web">' +
+                  '</div>' +
+                  '<div class="admin-form__field">' +
+                    '<label class="admin-form__label">Link del repositorio</label>' +
+                    '<input type="url" class="admin-form__input" id="post-repoUrl" placeholder="https://github.com/...">' +
+                  '</div>' +
+                '</div>' +
+                '<div class="admin-form__field">' +
+                  '<label class="admin-form__label">T\u00edtulo *</label>' +
+                  '<input type="text" class="admin-form__input" id="post-title" placeholder="T\u00edtulo de la actualizaci\u00f3n" required>' +
+                '</div>' +
+                '<div class="admin-form__field">' +
+                  '<label class="admin-form__label">Autor</label>' +
+                  '<input type="text" class="admin-form__input admin-form__input--disabled" id="post-author" disabled>' +
+                '</div>' +
+                '<div class="admin-form__field">' +
+                  '<label class="admin-form__label">Descripci\u00f3n / Contenido *</label>' +
+                  '<textarea class="admin-form__textarea" id="post-content" placeholder="Escribe el contenido de la actualizaci\u00f3n..." rows="8" required></textarea>' +
+                '</div>' +
+                '<div class="admin-form__actions">' +
+                  '<button type="submit" class="btn btn--primary" id="post-submit">Publicar actualizaci\u00f3n</button>' +
+                '</div>' +
+              '</form>' +
+            '</div>' +
+            '<div class="admin-list" id="posts-list"></div>';
+
+          document.getElementById('post-author').value = '@' + user.login;
+          document.getElementById('post-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var submitBtn = document.getElementById('post-submit');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Publicando...';
+            fetch('/api/posts', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                project: document.getElementById('post-project').value,
+                repoUrl: document.getElementById('post-repoUrl').value,
+                title: document.getElementById('post-title').value,
+                content: document.getElementById('post-content').value,
+              })
+            }).then(function(r) { return r.json(); }).then(function() {
+              document.getElementById('post-title').value = '';
+              document.getElementById('post-content').value = '';
+              document.getElementById('post-project').value = '';
+              document.getElementById('post-repoUrl').value = '';
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Publicar actualizaci\u00f3n';
+              loadPostsList();
+            }).catch(function() {
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Publicar actualizaci\u00f3n';
+              alert('Error al publicar.');
+            });
+          });
+          loadPostsList();
+        }
+
+        function loadPostsList() {
+          fetch('/api/posts').then(function(r){ return r.json(); }).then(function(posts) {
+            var list = document.getElementById('posts-list');
+            if (!list) return;
+            if (!posts.length) { list.innerHTML = '<p class="repos-empty">No hay publicaciones.</p>'; return; }
+            list.innerHTML = '<h2 class="admin-list__title">Publicaciones recientes</h2>' +
+              posts.map(function(p) {
+                var date = new Date(p.createdAt).toLocaleDateString('es-ES', { day:'numeric', month:'short', year:'numeric' });
+                var canDelete = user.role === 'owner' || p.author === user.login;
+                return '<div class="admin-list__item">' +
+                  '<div class="admin-list__item-info">' +
+                    '<span class="admin-list__item-title">' + p.title + '</span>' +
+                    '<span class="admin-list__item-meta">' + (p.project ? p.project + ' \u2022 ' : '') + '@' + p.author + ' \u2022 ' + date + '</span>' +
+                  '</div>' +
+                  (canDelete ? '<button class="admin-list__delete" data-id="' + p.id + '" data-type="posts" title="Eliminar">' +
+                    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
+                  '</button>' : '') +
+                '</div>';
+              }).join('');
+            list.querySelectorAll('.admin-list__delete').forEach(function(btn) {
+              btn.addEventListener('click', function() {
+                if (!confirm('\u00bfEliminar esta publicaci\u00f3n?')) return;
+                fetch('/api/' + btn.dataset.type + '/' + btn.dataset.id, { method: 'DELETE' })
+                  .then(function() { loadPostsList(); });
+              });
+            });
+          });
+        }
+
+        /* ── Announcements Tab (owner only) ── */
+        function renderAnnouncementsTab() {
+          content.innerHTML =
+            '<div class="admin-form-card reveal-up">' +
+              '<h2 class="admin-form-card__title">Nuevo anuncio</h2>' +
+              '<form id="ann-form" class="admin-form">' +
+                '<div class="admin-form__field">' +
+                  '<label class="admin-form__label">T\u00edtulo *</label>' +
+                  '<input type="text" class="admin-form__input" id="ann-title" placeholder="T\u00edtulo del anuncio" required>' +
+                '</div>' +
+                '<div class="admin-form__field">' +
+                  '<label class="admin-form__label">Tipo de anuncio</label>' +
+                  '<select class="admin-form__select" id="ann-type">' +
+                    '<option value="general">General</option>' +
+                    '<option value="new-member">Nueva incorporaci\u00f3n</option>' +
+                    '<option value="milestone">Hito alcanzado</option>' +
+                  '</select>' +
+                '</div>' +
+                '<div class="admin-form__field">' +
+                  '<label class="admin-form__label">Contenido *</label>' +
+                  '<textarea class="admin-form__textarea" id="ann-content" placeholder="Escribe el contenido del anuncio..." rows="8" required></textarea>' +
+                '</div>' +
+                '<div class="admin-form__actions">' +
+                  '<button type="submit" class="btn btn--primary" id="ann-submit">Publicar anuncio</button>' +
+                '</div>' +
+              '</form>' +
+            '</div>' +
+            '<div class="admin-list" id="ann-list"></div>';
+
+          document.getElementById('ann-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var submitBtn = document.getElementById('ann-submit');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Publicando...';
+            fetch('/api/announcements', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                title: document.getElementById('ann-title').value,
+                content: document.getElementById('ann-content').value,
+                type: document.getElementById('ann-type').value,
+              })
+            }).then(function(r) { return r.json(); }).then(function() {
+              document.getElementById('ann-title').value = '';
+              document.getElementById('ann-content').value = '';
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Publicar anuncio';
+              loadAnnList();
+            });
+          });
+          loadAnnList();
+        }
+
+        function loadAnnList() {
+          fetch('/api/announcements').then(function(r){ return r.json(); }).then(function(anns) {
+            var list = document.getElementById('ann-list');
+            if (!list) return;
+            if (!anns.length) { list.innerHTML = '<p class="repos-empty">No hay anuncios.</p>'; return; }
+            list.innerHTML = '<h2 class="admin-list__title">Anuncios recientes</h2>' +
+              anns.map(function(a) {
+                var date = new Date(a.createdAt).toLocaleDateString('es-ES', { day:'numeric', month:'short', year:'numeric' });
+                return '<div class="admin-list__item">' +
+                  '<div class="admin-list__item-info">' +
+                    '<span class="admin-list__item-title">' + a.title + '</span>' +
+                    '<span class="admin-list__item-meta">' + a.type + ' \u2022 @' + a.author + ' \u2022 ' + date + '</span>' +
+                  '</div>' +
+                  '<button class="admin-list__delete" data-id="' + a.id + '" data-type="announcements" title="Eliminar">' +
+                    '<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>' +
+                  '</button>' +
+                '</div>';
+              }).join('');
+            list.querySelectorAll('.admin-list__delete').forEach(function(btn) {
+              btn.addEventListener('click', function() {
+                if (!confirm('\u00bfEliminar este anuncio?')) return;
+                fetch('/api/announcements/' + btn.dataset.id, { method: 'DELETE' }).then(function() { loadAnnList(); });
+              });
+            });
+          });
+        }
+
+        /* ── Polls Tab (owner only) ── */
+        function renderPollsTab() {
+          content.innerHTML =
+            '<div class="admin-form-card reveal-up">' +
+              '<h2 class="admin-form-card__title">Nueva encuesta</h2>' +
+              '<form id="poll-form" class="admin-form">' +
+                '<div class="admin-form__field">' +
+                  '<label class="admin-form__label">Pregunta *</label>' +
+                  '<input type="text" class="admin-form__input" id="poll-question" placeholder="ej: \u00bfQu\u00e9 proyecto deber\u00edamos hacer接下来?" required>' +
+                '</div>' +
+                '<div class="admin-form__field">' +
+                  '<label class="admin-form__label">Opciones (m\u00ednimo 2) *</label>' +
+                  '<div id="poll-options-list">' +
+                    '<input type="text" class="admin-form__input poll-option-input" placeholder="Opci\u00f3n 1">' +
+                    '<input type="text" class="admin-form__input poll-option-input" placeholder="Opci\u00f3n 2">' +
+                  '</div>' +
+                  '<button type="button" class="btn btn--ghost btn--sm" id="add-option-btn">+ A\u00f1adir opci\u00f3n</button>' +
+                '</div>' +
+                '<div class="admin-form__actions">' +
+                  '<button type="submit" class="btn btn--primary" id="poll-submit">Crear encuesta</button>' +
+                '</div>' +
+              '</form>' +
+            '</div>' +
+            '<div class="admin-list" id="polls-list"></div>';
+
+          document.getElementById('add-option-btn').addEventListener('click', function() {
+            var list = document.getElementById('poll-options-list');
+            var count = list.querySelectorAll('.poll-option-input').length + 1;
+            var input = document.createElement('input');
+            input.type = 'text';
+            input.className = 'admin-form__input poll-option-input';
+            input.placeholder = 'Opci\u00f3n ' + count;
+            list.appendChild(input);
+          });
+
+          document.getElementById('poll-form').addEventListener('submit', function(e) {
+            e.preventDefault();
+            var options = Array.from(document.querySelectorAll('.poll-option-input')).map(function(i) { return i.value.trim(); }).filter(Boolean);
+            if (options.length < 2) { alert('Necesitas al menos 2 opciones.'); return; }
+            var submitBtn = document.getElementById('poll-submit');
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creando...';
+            fetch('/api/polls', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ question: document.getElementById('poll-question').value, options: options })
+            }).then(function(r) { return r.json(); }).then(function() {
+              document.getElementById('poll-question').value = '';
+              document.getElementById('poll-options-list').innerHTML =
+                '<input type="text" class="admin-form__input poll-option-input" placeholder="Opci\u00f3n 1">' +
+                '<input type="text" class="admin-form__input poll-option-input" placeholder="Opci\u00f3n 2">';
+              submitBtn.disabled = false;
+              submitBtn.textContent = 'Crear encuesta';
+              loadPollsList();
+            });
+          });
+          loadPollsList();
+        }
+
+        function loadPollsList() {
+          fetch('/api/polls').then(function(r){ return r.json(); }).then(function(polls) {
+            var list = document.getElementById('polls-list');
+            if (!list) return;
+            if (!polls.length) { list.innerHTML = '<p class="repos-empty">No hay encuestas.</p>'; return; }
+            list.innerHTML = '<h2 class="admin-list__title">Encuestas</h2>' +
+              polls.map(function(p) {
+                var total = p.options.reduce(function(s, o) { return s + o.votes; }, 0);
+                var date = new Date(p.createdAt).toLocaleDateString('es-ES', { day:'numeric', month:'short', year:'numeric' });
+                var closeBtn = p.open ? '<button class="btn btn--ghost btn--sm admin-close-poll" data-id="' + p.id + '">Cerrar</button>' : '<span class="poll-card__status poll-card__status--closed">Cerrada</span>';
+                return '<div class="admin-list__item">' +
+                  '<div class="admin-list__item-info">' +
+                    '<span class="admin-list__item-title">' + p.question + '</span>' +
+                    '<span class="admin-list__item-meta">' + total + ' votos \u2022 ' + p.options.length + ' opciones \u2022 ' + date + '</span>' +
+                  '</div>' +
+                  '<div class="admin-list__item-actions">' + closeBtn + '</div>' +
+                '</div>';
+              }).join('');
+            list.querySelectorAll('.admin-close-poll').forEach(function(btn) {
+              btn.addEventListener('click', function() {
+                if (!confirm('\u00bfCerrar esta encuesta?')) return;
+                fetch('/api/polls/' + btn.dataset.id + '/close', { method: 'POST' }).then(function() { loadPollsList(); });
+              });
+            });
+          });
+        }
+
+        renderTab('posts');
+      }
+    }, 100);
+
+    setTimeout(function() { clearInterval(checkInterval); }, 10000);
+  })();
+  </script>
+</body>
+</html>
