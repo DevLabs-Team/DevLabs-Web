@@ -223,81 +223,34 @@
     }
 
     .member-readme {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 2rem 2.5rem;
+      background: var(--bg-card, #0f1424);
+      border: 1px solid var(--border, rgba(255,255,255,0.1));
+      border-radius: 12px;
       margin-bottom: 4rem;
-      line-height: 1.8;
-      color: var(--text-secondary);
-      overflow-wrap: break-word;
+      overflow: hidden;
+      position: relative;
     }
     .member-readme__title {
       display: flex;
       align-items: center;
       gap: 0.6rem;
-      font-size: 1rem;
+      font-size: 0.95rem;
       font-weight: 600;
-      color: var(--text-primary);
-      margin-bottom: 1.5rem;
-      padding-bottom: 1rem;
-      border-bottom: 1px solid var(--border);
+      color: var(--text-primary, #e6edf3);
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border, rgba(255,255,255,0.1));
+      letter-spacing: 0.02em;
     }
-    .member-readme__title svg { color: var(--accent); }
-    .member-readme h1, .member-readme h2, .member-readme h3, .member-readme h4 {
-      color: var(--text-primary);
-      margin: 1.5em 0 0.6em;
-      line-height: 1.3;
+    .member-readme__title svg { color: var(--accent, #58a6ff); flex-shrink: 0; }
+    .member-readme__frame {
+      display: block;
+      width: 100%;
+      border: 0;
+      background: #0f1424;
     }
-    .member-readme h1:first-child, .member-readme h2:first-child, .member-readme h3:first-child { margin-top: 0; }
-    .member-readme h1 { font-size: 1.6rem; }
-    .member-readme h2 { font-size: 1.3rem; }
-    .member-readme h3 { font-size: 1.1rem; }
-    .member-readme p { margin: 0 0 1em; }
-    .member-readme ul, .member-readme ol { padding-left: 1.5em; margin: 0 0 1em; }
-    .member-readme li { margin: 0.3em 0; }
-    .member-readme a { color: var(--accent); text-decoration: none; }
-    .member-readme a:hover { text-decoration: underline; }
-    .member-readme code {
-      font-family: var(--font-mono);
-      font-size: 0.85em;
-      background: var(--bg-tertiary, rgba(255,255,255,0.06));
-      padding: 0.2em 0.4em;
-      border-radius: 4px;
-      color: var(--accent);
-    }
-    .member-readme pre {
-      background: var(--bg-primary, #0a0f1e);
-      border: 1px solid var(--border);
-      border-radius: var(--radius);
-      padding: 1rem 1.25rem;
-      overflow-x: auto;
-      margin: 0 0 1em;
-    }
-    .member-readme pre code {
-      background: none;
-      padding: 0;
-      color: inherit;
-    }
-    .member-readme img {
-      max-width: 100%;
-      border-radius: var(--radius);
-    }
-    .member-readme blockquote {
-      border-left: 3px solid var(--accent);
-      margin: 0 0 1em;
-      padding: 0.4em 1em;
-      color: var(--text-muted);
-      background: rgba(255,255,255,0.03);
-      border-radius: 0 var(--radius) var(--radius) 0;
-    }
-    .member-readme hr {
-      border: none;
-      border-top: 1px solid var(--border);
-      margin: 1.5em 0;
-    }
+
     @media (max-width: 600px) {
-      .member-readme { padding: 1.25rem; }
+      .member-readme__title { padding: 1rem 1.1rem; }
     }
 
     @media (max-width: 768px) {
@@ -486,13 +439,36 @@
             decoded = atob(readme.content.replace(/\s/g, ''));
           } catch (e) { decoded = ''; }
           if (decoded) {
-            var rendered = (window.marked && window.marked.parse) ? window.marked.parse(decoded) : '<pre>' + escapedHTML(decoded) + '</pre>';
+            var mdHtml = (window.marked && window.marked.parse) ? window.marked.parse(decoded) : '<pre>' + escapedHTML(decoded) + '</pre>';
+            var doc =
+              '<!DOCTYPE html><html><head><meta charset="utf-8">' +
+              '<style>' +
+              'body{margin:0;background:#0f1424;color:#c9d1d9;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Helvetica,Arial,sans-serif;font-size:16px;line-height:1.7;padding:24px;box-sizing:border-box;}' +
+              'h1,h2,h3,h4,h5,h6{color:#e6edf3;font-weight:600;line-height:1.3;margin:1.4em 0 0.6em;}' +
+              'h1{font-size:1.7em;padding-bottom:.3em;border-bottom:1px solid #21262d;}' +
+              'h2{font-size:1.4em;padding-bottom:.3em;border-bottom:1px solid #21262d;}' +
+              'h3{font-size:1.15em;}h4{font-size:1em;}' +
+              'p{margin:0 0 1em;}a{color:#58a6ff;text-decoration:none;}a:hover{text-decoration:underline;}' +
+              'ul,ol{padding-left:1.7em;margin:0 0 1em;}li{margin:.3em 0;}li>ul,li>ol{margin-bottom:0;}' +
+              'code{font-family:SFMono-Regular,Consolas,"Liberation Mono",Menlo,monospace;font-size:.85em;background:rgba(110,118,129,.25);padding:.15em .35em;border-radius:6px;color:#e6edf3;}' +
+              'pre{background:#161b22;border:1px solid #30363d;border-radius:8px;padding:1em 1.2em;overflow:auto;margin:0 0 1em;line-height:1.5;}' +
+              'pre code{background:none;padding:0;white-space:pre;}' +
+              'img{max-width:100%;border-radius:6px;}' +
+              'blockquote{border-left:4px solid #30363d;margin:0 0 1em;padding:.2em 1em;color:#8b949e;}' +
+              'hr{border:none;border-top:1px solid #30363d;margin:1.5em 0;}' +
+              'table{border-collapse:collapse;margin:0 0 1em;width:100%;}' +
+              'table td,table th{border:1px solid #30363d;padding:.5em .9em;}table th{background:#161b22;}' +
+              'strong{color:#e6edf3;font-weight:600;}input[type=checkbox]{margin-right:.4em;}' +
+              'details{margin:0 0 1em;}summary{cursor:pointer;color:#e6edf3;}' +
+              '.align-center,img[align=center]{display:block;margin:1em auto;text-align:center;}.align-right,img[align=right]{float:right;margin:0 0 1em 1em;}.align-left,img[align=left]{float:left;margin:0 1em 1em 0;}' +
+              'kbd{background:#161b22;border:1px solid #30363d;border-bottom-width:2px;border-radius:6px;padding:.15em .4em;font-family:inherit;}' +
+              '</style></head><body>' + mdHtml + '</body></html>';
             readmeHtml = '<div class="member-readme reveal-up">' +
               '<div class="member-readme__title">' +
                 '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>' +
                 'README del perfil' +
               '</div>' +
-              rendered +
+              '<iframe class="member-readme__frame" title="README" scrolling="yes" sandbox="allow-same-origin" srcdoc="' + escapedHTML(doc) + '"></iframe>' +
             '</div>';
           }
         }
@@ -530,6 +506,23 @@
         reposHtml;
 
         page.innerHTML = memberHtml;
+
+        // Auto-size the README iframe to its content (behaves like a self-contained embed)
+        var readmeFrame = page.querySelector('.member-readme__frame');
+        if (readmeFrame) {
+          var syncHeight = function() {
+            try {
+              var d = readmeFrame.contentDocument;
+              if (d && d.body) {
+                readmeFrame.style.height = Math.max(d.body.scrollHeight, 200) + 'px';
+              }
+            } catch (e) {}
+          };
+          readmeFrame.addEventListener('load', function() {
+            syncHeight();
+            setTimeout(syncHeight, 300);
+          });
+        }
 
         // Init reveals
         page.querySelectorAll('.reveal-up').forEach(function(el) {
