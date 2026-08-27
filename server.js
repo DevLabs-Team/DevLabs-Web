@@ -49,7 +49,9 @@ app.use(express.static(path.join(__dirname, 'public')));
 /* ── GitHub helpers ── */
 function githubGet(urlPath, token) {
   return new Promise((resolve, reject) => {
-    const opts = { hostname: 'api.github.com', path: urlPath, headers: { 'User-Agent': 'DevLabs-Web', 'Accept': 'application/vnd.github+json', 'Authorization': token ? 'token ' + token : undefined } };
+    const headers = { 'User-Agent': 'DevLabs-Web', 'Accept': 'application/vnd.github+json' };
+    if (token) headers['Authorization'] = 'token ' + token;
+    const opts = { hostname: 'api.github.com', path: urlPath, headers: headers };
     const req = https.get(opts, (res) => {
       let body = '';
       res.on('data', (c) => body += c);
@@ -71,7 +73,9 @@ function githubGet(urlPath, token) {
 function githubPost(urlPath, data, token) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify(data);
-    const opts = { hostname: 'api.github.com', path: urlPath, method: 'POST', headers: { 'User-Agent': 'DevLabs-Web', 'Accept': 'application/vnd.github+json', 'Authorization': token ? 'token ' + token : undefined, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } };
+    const headers = { 'User-Agent': 'DevLabs-Web', 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) };
+    if (token) headers['Authorization'] = 'token ' + token;
+    const opts = { hostname: 'api.github.com', path: urlPath, method: 'POST', headers: headers };
     const req = https.request(opts, (res) => {
       let b = '';
       res.on('data', (c) => b += c);
