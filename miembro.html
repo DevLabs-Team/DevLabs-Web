@@ -1,0 +1,499 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Miembro — DevLabs Team</title>
+  <meta name="description" content="Perfil de miembro — DevLabs Team">
+  <link rel="icon" type="image/svg+xml" href="favicon.svg">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+  <style>
+    .member-page {
+      position: relative;
+      z-index: 1;
+      padding: 8rem 2rem 4rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+    .member-page__back {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.4rem;
+      color: var(--text-muted);
+      text-decoration: none;
+      font-size: 0.82rem;
+      font-weight: 500;
+      margin-bottom: 3rem;
+      transition: color 0.3s;
+    }
+    .member-page__back:hover { color: var(--accent); }
+
+    .member-profile {
+      display: flex;
+      gap: 3rem;
+      align-items: flex-start;
+      margin-bottom: 4rem;
+    }
+    .member-profile__avatar-wrap {
+      flex-shrink: 0;
+      position: relative;
+    }
+    .member-profile__avatar {
+      width: 160px;
+      height: 160px;
+      border-radius: 50%;
+      border: 3px solid var(--border);
+      object-fit: cover;
+      transition: border-color 0.4s, box-shadow 0.4s;
+    }
+    .member-profile__avatar:hover {
+      border-color: var(--accent);
+      box-shadow: 0 0 40px var(--accent-glow);
+    }
+    .member-profile__avatar-ring {
+      position: absolute;
+      inset: -6px;
+      border-radius: 50%;
+      border: 1px solid rgba(0, 240, 255, 0.1);
+      animation: memberRingPulse 3s ease-in-out infinite;
+    }
+    @keyframes memberRingPulse {
+      0%, 100% { transform: scale(1); opacity: 0.3; }
+      50% { transform: scale(1.03); opacity: 0.6; }
+    }
+    .member-profile__info {
+      flex: 1;
+      min-width: 0;
+    }
+    .member-profile__name {
+      font-size: 2.2rem;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 0.25rem;
+    }
+    .member-profile__login {
+      font-family: var(--font-mono);
+      font-size: 0.9rem;
+      color: var(--accent);
+      margin-bottom: 1rem;
+    }
+    .member-profile__bio {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      line-height: 1.8;
+      margin-bottom: 1.5rem;
+    }
+    .member-profile__meta {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .member-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 0.4rem;
+      font-size: 0.85rem;
+      color: var(--text-muted);
+    }
+    .member-meta-item svg {
+      color: var(--accent);
+      opacity: 0.6;
+    }
+    .member-profile__links {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+
+    .member-stats {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 1.5rem;
+      margin-bottom: 4rem;
+    }
+    .member-stat {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 1.5rem;
+      text-align: center;
+      transition: all 0.3s var(--ease);
+    }
+    .member-stat:hover {
+      border-color: var(--border-accent);
+      transform: translateY(-3px);
+    }
+    .member-stat__number {
+      font-family: var(--font-mono);
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-shadow: 0 0 20px var(--accent-dim);
+    }
+    .member-stat__label {
+      font-size: 0.78rem;
+      color: var(--text-muted);
+      text-transform: uppercase;
+      letter-spacing: 0.1em;
+      margin-top: 0.3rem;
+    }
+
+    .member-repos__header {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    .member-repos__title {
+      font-size: 1.3rem;
+      font-weight: 600;
+    }
+    .member-repos__count {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--accent);
+      background: var(--accent-dim);
+      border: 1px solid var(--border-accent);
+      padding: 0.2rem 0.6rem;
+      border-radius: 100px;
+    }
+    .member-repos__grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 1.25rem;
+    }
+    .member-repos__empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      color: var(--text-muted);
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      padding: 3rem;
+    }
+
+    .member-loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      gap: 1.5rem;
+    }
+    .member-loading__spinner {
+      width: 40px;
+      height: 40px;
+      border: 2px solid var(--border);
+      border-top-color: var(--accent);
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .member-loading__text {
+      font-family: var(--font-mono);
+      font-size: 0.82rem;
+      color: var(--text-muted);
+    }
+
+    .member-error {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      gap: 1rem;
+      text-align: center;
+    }
+    .member-error__code {
+      font-family: var(--font-mono);
+      font-size: 4rem;
+      font-weight: 700;
+      background: var(--gradient-accent);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .member-error__text {
+      color: var(--text-secondary);
+      font-size: 1rem;
+    }
+
+    @media (max-width: 768px) {
+      .member-profile {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+      }
+      .member-profile__meta { justify-content: center; }
+      .member-profile__links { justify-content: center; }
+      .member-stats { grid-template-columns: repeat(2, 1fr); }
+      .member-repos__grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .member-page { padding-top: 6rem; }
+      .member-profile__avatar { width: 120px; height: 120px; }
+      .member-profile__name { font-size: 1.6rem; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- TV Transition Overlay -->
+  <div class="tv-overlay" id="tv-overlay"></div>
+
+  <!-- Preloader -->
+  <div class="preloader" id="preloader">
+    <div class="preloader__inner">
+      <div class="preloader__logo">
+        <span class="preloader__bracket">&lt;</span>DL<span class="preloader__bracket">/&gt;
+      </div>
+      <div class="preloader__bar">
+        <div class="preloader__fill"></div>
+      </div>
+      <span class="preloader__text">cargando perfil...</span>
+    </div>
+  </div>
+
+  <!-- Custom Cursor -->
+  <div class="cursor" id="cursor"></div>
+  <div class="cursor-follower" id="cursor-follower"></div>
+
+  <!-- Background Canvas -->
+  <canvas id="grid-bg"></canvas>
+
+  <!-- Floating Orbs -->
+  <div class="orb orb--1"></div>
+  <div class="orb orb--2"></div>
+  <div class="orb orb--3"></div>
+
+  <!-- Navigation -->
+  <nav class="nav" id="nav">
+    <a href="index.html" class="nav__logo" data-transition="scanline">
+      <span class="nav__logo-bracket">&lt;</span>DL<span class="nav__logo-bracket">/&gt;</span>
+    </a>
+    <div class="nav__links">
+      <a href="index.html" class="nav__link" data-transition="scanline">Inicio</a>
+      <a href="index.html#about" class="nav__link" data-transition="scanline">Sobre nosotros</a>
+      <a href="index.html#team" class="nav__link nav__link--active" data-transition="scanline">Equipo</a>
+      <a href="index.html#tech" class="nav__link" data-transition="scanline">Tech Stack</a>
+      <a href="index.html#contact" class="nav__link" data-transition="scanline">Contacto</a>
+    </div>
+    <a href="https://github.com/DevLabs-Team" target="_blank" class="nav__github magnetic" data-strength="20">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+        <path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/>
+      </svg>
+      GitHub
+    </a>
+  </nav>
+
+  <!-- Member Content (filled by JS) -->
+  <main class="member-page" id="member-page">
+    <a href="index.html#team" class="member-page__back" data-transition="scanline">
+      <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+      Volver al equipo
+    </a>
+    <div class="member-loading" id="member-loading">
+      <div class="member-loading__spinner"></div>
+      <span class="member-loading__text">Obteniendo datos de GitHub...</span>
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer__divider"></div>
+    <div class="footer__content">
+      <div class="footer__logo">
+        <span class="nav__logo-bracket">&lt;</span>DL<span class="nav__logo-bracket">/&gt;</span>
+      </div>
+      <p class="footer__copy">&copy; 2026 DevLabs Team. Todos los derechos reservados.</p>
+      <p class="footer__tagline">Hecho con &#9889; desde Espa&ntilde;a</p>
+    </div>
+  </footer>
+
+  <script src="script.js"></script>
+  <script>
+    (function() {
+      const params = new URLSearchParams(window.location.search);
+      const username = params.get('user');
+      const page = document.getElementById('member-page');
+      const loading = document.getElementById('member-loading');
+
+      if (!username) {
+        showMemberError(page, loading, '404', 'No se ha especificado ning&uacute;n usuario.');
+        return;
+      }
+
+      document.title = username + ' — DevLabs Team';
+
+      const LANG_COLORS = {
+        JavaScript: '#f7df1e', TypeScript: '#3178c6', HTML: '#e34c26',
+        CSS: '#563d7c', Python: '#3572A5', Java: '#b07219', 'C++': '#f34b7d',
+        C: '#555555', Go: '#00ADD8', Rust: '#dea584', Ruby: '#701516',
+        PHP: '#4F5D95', Shell: '#89e051', Dart: '#00B4AB', Kotlin: '#A97BFF',
+        Swift: '#F05138', Vue: '#41b883', SCSS: '#c6538c', Lua: '#000080',
+        Zig: '#ec915c', Haskell: '#5e5086', 'Jupyter Notebook': '#DA5B0B',
+      };
+
+      const FOLDER_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>';
+      const STAR_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>';
+      const FORK_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="18" r="3"/><circle cx="6" cy="6" r="3"/><circle cx="18" cy="6" r="3"/><path d="M18 9v6M6 9v6M6 9l6-3 6 3"/></svg>';
+      const ARROW_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>';
+      const GITHUB_SVG = '<svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>';
+
+      Promise.all([
+        fetch('https://api.github.com/users/' + username).then(function(r) { return r.json(); }),
+        fetch('https://api.github.com/users/' + username + '/repos?sort=updated&per_page=30').then(function(r) { return r.json(); })
+      ]).then(function(results) {
+        var user = results[0];
+        var repos = results[1];
+
+        if (user.message === 'Not Found') {
+          showMemberError(page, loading, '404', 'Usuario "' + username + '" no encontrado en GitHub.');
+          return;
+        }
+
+        if (loading) loading.remove();
+
+        var reposHtml = '';
+        if (Array.isArray(repos) && repos.length > 0) {
+          var reposCards = repos.map(function(repo) {
+            var langColor = LANG_COLORS[repo.language] || '#888';
+            var license = repo.license ? repo.license.spdx_id : '';
+            var updated = new Date(repo.updated_at).toLocaleDateString('es-ES', { day: 'numeric', month: 'short', year: 'numeric' });
+            return '<div class="repo-full reveal-up" data-tilt>' +
+              '<div class="project-card__glow"></div>' +
+              '<div class="repo-full__header">' +
+                '<div class="repo-full__icon">' + FOLDER_SVG + '</div>' +
+                '<div class="repo-full__info">' +
+                  '<h3 class="repo-full__name">' + repo.name + '</h3>' +
+                  '<p class="repo-full__desc">' + (repo.description || 'Sin descripci\u00f3n') + '</p>' +
+                '</div>' +
+              '</div>' +
+              '<div class="repo-full__meta">' +
+                (repo.language ? '<span class="project-card__lang"><span class="project-card__lang-dot" style="background:' + langColor + '"></span> ' + repo.language + '</span>' : '') +
+                '<span class="project-card__stat">' + STAR_SVG + ' ' + repo.stargazers_count + '</span>' +
+                '<span class="project-card__stat">' + FORK_SVG + ' ' + repo.forks_count + '</span>' +
+                (license ? '<span class="project-card__license">' + license + '</span>' : '') +
+                '<span class="project-card__updated">' + updated + '</span>' +
+              '</div>' +
+              '<a href="' + repo.html_url + '" target="_blank" class="project-card__link magnetic" data-strength="15">' +
+                'Ver repositorio ' + ARROW_SVG +
+              '</a>' +
+            '</div>';
+          }).join('');
+          reposHtml = '<div class="member-repos__header reveal-up">' +
+            '<h2 class="member-repos__title">Repositorios</h2>' +
+            '<span class="member-repos__count">' + repos.length + '</span>' +
+          '</div>' +
+          '<div class="member-repos__grid">' + reposCards + '</div>';
+        } else {
+          reposHtml = '<div class="member-repos__header reveal-up">' +
+            '<h2 class="member-repos__title">Repositorios</h2>' +
+          '</div>' +
+          '<p class="member-repos__empty">No hay repositorios p&uacute;blicos.</p>';
+        }
+
+        var memberHtml = '<a href="index.html#team" class="member-page__back reveal-left" data-transition="scanline">' +
+          '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>' +
+          ' Volver al equipo' +
+        '</a>' +
+        '<div class="member-profile reveal-up">' +
+          '<div class="member-profile__avatar-wrap">' +
+            '<div class="member-profile__avatar-ring"></div>' +
+            '<img class="member-profile__avatar" src="' + user.avatar_url + '" alt="' + user.login + '">' +
+          '</div>' +
+          '<div class="member-profile__info">' +
+            '<h1 class="member-profile__name">' + (user.name || user.login) + '</h1>' +
+            '<div class="member-profile__login">@' + user.login + '</div>' +
+            (user.bio ? '<p class="member-profile__bio">' + user.bio + '</p>' : '') +
+            '<div class="member-profile__meta">' +
+              (user.location ? '<span class="member-meta-item"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/><circle cx="12" cy="10" r="3"/></svg> ' + user.location + '</span>' : '') +
+              (user.company ? '<span class="member-meta-item"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21h18M9 8h1M9 12h1M9 16h1M14 8h1M14 12h1M14 16h1M5 21V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2v16"/></svg> ' + user.company + '</span>' : '') +
+              (user.blog ? '<span class="member-meta-item"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg> <a href="' + (user.blog.startsWith('http') ? user.blog : 'https://' + user.blog) + '" target="_blank" style="color:var(--text-muted);text-decoration:none;transition:color 0.3s;" onmouseover="this.style.color=\'var(--accent)\'" onmouseout="this.style.color=\'var(--text-muted)\'">' + user.blog + '</a></span>' : '') +
+            '</div>' +
+            '<div class="member-profile__links">' +
+              '<a href="' + user.html_url + '" target="_blank" class="btn btn--outline magnetic" data-strength="15">' + GITHUB_SVG + ' Perfil en GitHub</a>' +
+            '</div>' +
+          '</div>' +
+        '</div>' +
+        '<div class="member-stats reveal-up">' +
+          '<div class="member-stat"><div class="member-stat__number">' + user.public_repos + '</div><div class="member-stat__label">Repositorios</div></div>' +
+          '<div class="member-stat"><div class="member-stat__number">' + user.followers + '</div><div class="member-stat__label">Followers</div></div>' +
+          '<div class="member-stat"><div class="member-stat__number">' + user.following + '</div><div class="member-stat__label">Following</div></div>' +
+          '<div class="member-stat"><div class="member-stat__number">' + (user.public_gists || 0) + '</div><div class="member-stat__label">Gists</div></div>' +
+        '</div>' +
+        reposHtml;
+
+        page.innerHTML = memberHtml;
+
+        // Init reveals
+        page.querySelectorAll('.reveal-up').forEach(function(el) {
+          el.classList.add('reveal-up');
+        });
+        page.querySelectorAll('[data-tilt]').forEach(function(el) {
+          el.addEventListener('mousemove', function(e) {
+            var rect = el.getBoundingClientRect();
+            var x = (e.clientX - rect.left) / rect.width;
+            var y = (e.clientY - rect.top) / rect.height;
+            el.style.transform = 'perspective(800px) rotateX(' + ((0.5 - y) * 8) + 'deg) rotateY(' + ((x - 0.5) * 8) + 'deg) translateY(-4px)';
+            el.style.transition = 'transform 0.1s';
+            el.style.setProperty('--mouse-x', (x * 100) + '%');
+            el.style.setProperty('--mouse-y', (y * 100) + '%');
+          });
+          el.addEventListener('mouseleave', function() {
+            el.style.transform = 'perspective(800px) rotateX(0) rotateY(0) translateY(0)';
+            el.style.transition = 'transform 0.5s cubic-bezier(0.34, 1.56, 0.64, 1)';
+          });
+        });
+        page.querySelectorAll('.magnetic').forEach(function(el) {
+          el.addEventListener('mousemove', function(e) {
+            var rect = el.getBoundingClientRect();
+            var x = e.clientX - rect.left - rect.width / 2;
+            var y = e.clientY - rect.top - rect.height / 2;
+            el.style.transform = 'translate(' + (x * 0.3) + 'px, ' + (y * 0.3) + 'px)';
+          });
+          el.addEventListener('mouseleave', function() {
+            el.style.transform = 'translate(0, 0)';
+            el.style.transition = 'transform 0.4s cubic-bezier(0.34, 1.56, 0.64, 1)';
+            setTimeout(function() { el.style.transition = ''; }, 400);
+          });
+        });
+        page.querySelectorAll('.repo-full').forEach(function(card) {
+          card.addEventListener('mousemove', function(e) {
+            var rect = card.getBoundingClientRect();
+            card.style.setProperty('--mouse-x', ((e.clientX - rect.left) / rect.width) * 100 + '%');
+            card.style.setProperty('--mouse-y', ((e.clientY - rect.top) / rect.height) * 100 + '%');
+          });
+        });
+
+        // Trigger reveal animations
+        requestAnimationFrame(function() {
+          page.querySelectorAll('.reveal-up, .reveal-left').forEach(function(el) {
+            el.classList.add('visible');
+          });
+        });
+      })
+      .catch(function() {
+        showMemberError(page, loading, 'Error', 'No se pudieron obtener los datos de GitHub.');
+      });
+
+      function showMemberError(page, loading, code, text) {
+        if (loading) loading.remove();
+        var backLink = '<a href="index.html#team" class="member-page__back" data-transition="scanline">' +
+          '<svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>' +
+          ' Volver al equipo' +
+        '</a>';
+        page.innerHTML = backLink +
+          '<div class="member-error">' +
+            '<div class="member-error__code">' + code + '</div>' +
+            '<p class="member-error__text">' + text + '</p>' +
+            '<a href="index.html#team" class="btn btn--primary magnetic" data-strength="20" data-transition="scanline">Ver equipo</a>' +
+          '</div>';
+      }
+    })();
+  </script>
+</body>
+</html>

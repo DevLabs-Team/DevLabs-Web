@@ -70,6 +70,32 @@
   });
 
   /* ========================================
+     CURSOR SECTION STATES
+     ======================================== */
+  const cursorSections = document.querySelectorAll('[data-cursor]');
+  let currentCursorSection = '';
+
+  const cursorSectionObserver = new IntersectionObserver(
+    (entries) => {
+      entries.forEach((entry) => {
+        if (entry.isIntersecting && entry.intersectionRatio > 0.3) {
+          const section = entry.target.dataset.cursor;
+          if (section !== currentCursorSection) {
+            currentCursorSection = section;
+            cursor.classList.remove('cursor--hero', 'cursor--about', 'cursor--stats', 'cursor--projects', 'cursor--team', 'cursor--tech', 'cursor--contact');
+            follower.classList.remove('cursor--hero', 'cursor--about', 'cursor--stats', 'cursor--projects', 'cursor--team', 'cursor--tech', 'cursor--contact');
+            cursor.classList.add('cursor--' + section);
+            follower.classList.add('cursor--' + section);
+          }
+        }
+      });
+    },
+    { threshold: [0.3, 0.5, 0.7], rootMargin: '-10% 0px -10% 0px' }
+  );
+
+  cursorSections.forEach((s) => cursorSectionObserver.observe(s));
+
+  /* ========================================
      GRID BACKGROUND (Canvas)
      ======================================== */
   const canvas = document.getElementById('grid-bg');
@@ -910,12 +936,14 @@
     teamGrid.innerHTML = members.map((m) => `
       <div class="team-card reveal-up" data-tilt>
         <div class="team-card__glow"></div>
-        <img class="team-card__avatar" src="${m.avatar_url}" alt="${m.login}" loading="lazy">
-        <h3 class="team-card__name">${m.login}</h3>
+        <a href="miembro.html?user=${m.login}" class="team-card__avatar-link" data-transition="glitch">
+          <img class="team-card__avatar" src="${m.avatar_url}" alt="${m.login}" loading="lazy">
+        </a>
+        <h3 class="team-card__name"><a href="miembro.html?user=${m.login}" class="team-card__name-link" data-transition="glitch">${m.login}</a></h3>
         <span class="team-card__role">Member</span>
-        <a href="${m.html_url}" target="_blank" class="team-card__link magnetic" data-strength="10">
-          <svg viewBox="0 0 24 24" width="14" height="14" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
-          GitHub
+        <a href="miembro.html?user=${m.login}" class="team-card__link magnetic" data-strength="10" data-transition="glitch">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"/><polyline points="15 3 21 3 21 9"/><line x1="10" y1="14" x2="21" y2="3"/></svg>
+          Ver perfil
         </a>
       </div>
     `).join('');
@@ -1306,7 +1334,7 @@
     });
   }
 
-  /* ---- TV Page Transition ---- */
+  /* ---- Page Transitions ---- */
   const tvOverlay = document.getElementById('tv-overlay');
   const tvLinks = document.querySelectorAll('a[href$=".html"]');
   const TV_OFF_MS = 550;
@@ -1316,33 +1344,91 @@
     tvOverlay.innerHTML = '<div class="tv-overlay__screen"></div><div class="tv-overlay__beam"></div>';
   }
 
-  // On load: if coming from a TV transition, play turn-on then hide
-  if (sessionStorage.getItem('tvTransition')) {
-    sessionStorage.removeItem('tvTransition');
-    const preloader = document.getElementById('preloader');
-    if (preloader) preloader.style.display = 'none';
-    buildTvInner();
-    tvOverlay.style.display = 'flex';
-    tvOverlay.classList.add('tv-on');
-    setTimeout(() => {
-      tvOverlay.style.display = 'none';
-      tvOverlay.classList.remove('tv-on');
-      tvOverlay.innerHTML = '';
-      if (preloader) preloader.style.display = '';
-    }, TV_ON_MS);
+  function buildGlitchInner() {
+    tvOverlay.innerHTML = `
+      <div class="glitch-transition__noise"></div>
+      <div class="glitch-transition__bars"></div>
+      <div class="glitch-transition__flash"></div>
+    `;
   }
 
-  // Intercept inter-page links: play turn-off then navigate
+  function buildScanlineInner() {
+    tvOverlay.innerHTML = `
+      <div class="scanline-transition__line"></div>
+      <div class="scanline-transition__fill"></div>
+    `;
+  }
+
+  const TRANSITION_MS = { tv: 550, glitch: 500, scanline: 600 };
+
+  // On load: if coming from a transition, play the "on" version then hide
+  const savedTransition = sessionStorage.getItem('pageTransition');
+  if (savedTransition) {
+    sessionStorage.removeItem('pageTransition');
+    const preloader = document.getElementById('preloader');
+    if (preloader) preloader.style.display = 'none';
+
+    if (savedTransition === 'glitch') {
+      buildGlitchInner();
+      tvOverlay.style.display = 'flex';
+      tvOverlay.classList.add('glitch-in');
+      setTimeout(() => {
+        tvOverlay.style.display = 'none';
+        tvOverlay.classList.remove('glitch-in');
+        tvOverlay.innerHTML = '';
+        if (preloader) preloader.style.display = '';
+      }, TRANSITION_MS.glitch);
+    } else if (savedTransition === 'scanline') {
+      buildScanlineInner();
+      tvOverlay.style.display = 'flex';
+      tvOverlay.classList.add('scanline-in');
+      setTimeout(() => {
+        tvOverlay.style.display = 'none';
+        tvOverlay.classList.remove('scanline-in');
+        tvOverlay.innerHTML = '';
+        if (preloader) preloader.style.display = '';
+      }, TRANSITION_MS.scanline);
+    } else {
+      // tv (default)
+      buildTvInner();
+      tvOverlay.style.display = 'flex';
+      tvOverlay.classList.add('tv-on');
+      setTimeout(() => {
+        tvOverlay.style.display = 'none';
+        tvOverlay.classList.remove('tv-on');
+        tvOverlay.innerHTML = '';
+        if (preloader) preloader.style.display = '';
+      }, TV_ON_MS);
+    }
+  }
+
+  // Intercept inter-page links
   tvLinks.forEach((link) => {
     link.addEventListener('click', (e) => {
       const href = link.getAttribute('href');
       if (!href || href === window.location.pathname.split('/').pop()) return;
       e.preventDefault();
-      buildTvInner();
-      tvOverlay.style.display = 'flex';
-      tvOverlay.classList.add('tv-off');
-      sessionStorage.setItem('tvTransition', '1');
-      setTimeout(() => { window.location.href = href; }, TV_OFF_MS);
+      const type = link.dataset.transition || 'tv';
+
+      if (type === 'glitch') {
+        buildGlitchInner();
+        tvOverlay.style.display = 'flex';
+        tvOverlay.classList.add('glitch-out');
+        sessionStorage.setItem('pageTransition', 'glitch');
+        setTimeout(() => { window.location.href = href; }, TRANSITION_MS.glitch);
+      } else if (type === 'scanline') {
+        buildScanlineInner();
+        tvOverlay.style.display = 'flex';
+        tvOverlay.classList.add('scanline-out');
+        sessionStorage.setItem('pageTransition', 'scanline');
+        setTimeout(() => { window.location.href = href; }, TRANSITION_MS.scanline);
+      } else {
+        buildTvInner();
+        tvOverlay.style.display = 'flex';
+        tvOverlay.classList.add('tv-off');
+        sessionStorage.setItem('pageTransition', 'tv');
+        setTimeout(() => { window.location.href = href; }, TV_OFF_MS);
+      }
     });
   });
 
