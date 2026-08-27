@@ -5,11 +5,15 @@
   "main": "server.js",
   "scripts": {
     "start": "node server.js",
-    "dev": "node server.js"
+    "dev": "node server.js",
+    "db:init": "node db/init.js",
+    "build": "node db/init.js"
   },
   "dependencies": {
+    "connect-pg-simple": "^9.0.1",
     "dotenv": "^16.3.1",
     "express": "^4.18.2",
-    "express-session": "^1.17.3"
+    "express-session": "^1.17.3",
+    "pg": "^8.11.3"
   }
 }
