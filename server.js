@@ -70,12 +70,12 @@ function githubGet(urlPath, token) {
     req.setTimeout(15000, function () { req.destroy(new Error('GitHub GET timeout ' + urlPath)); });
   });
 }
-function githubPost(urlPath, data, token) {
+function githubPost(urlPath, data, token, host) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify(data);
-    const headers = { 'User-Agent': 'DevLabs-Web', 'Accept': 'application/vnd.github+json', 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) };
+    const headers = { 'User-Agent': 'DevLabs-Web', 'Accept': 'application/json', 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) };
     if (token) headers['Authorization'] = 'token ' + token;
-    const opts = { hostname: 'api.github.com', path: urlPath, method: 'POST', headers: headers };
+    const opts = { hostname: host || 'api.github.com', path: urlPath, method: 'POST', headers: headers };
     const req = https.request(opts, (res) => {
       let b = '';
       res.on('data', (c) => b += c);
@@ -111,7 +111,7 @@ app.get('/auth/callback', async (req, res) => {
   const { code } = req.query;
   if (!code) return res.redirect('/');
   try {
-    const tokenRes = await githubPost('/login/oauth/access_token', { client_id: GITHUB.clientId, client_secret: GITHUB.clientSecret, code }, null);
+    const tokenRes = await githubPost('/login/oauth/access_token', { client_id: GITHUB.clientId, client_secret: GITHUB.clientSecret, code }, null, 'github.com');
     if (tokenRes.error) return res.redirect('/?error=oauth_failed');
     const token = tokenRes.access_token;
     const user = await githubGet('/user', token);
