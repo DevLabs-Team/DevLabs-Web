@@ -143,7 +143,14 @@ app.get('/auth/callback', async (req, res) => {
 
 app.get('/auth/logout', (req, res) => { req.session.destroy(); res.redirect('/'); });
 
-app.get('/auth/debug', (req, res) => {
+app.get('/auth/debug', async (req, res) => {
+  let db = 'unknown';
+  try {
+    await pool.query('SELECT 1');
+    db = 'ok';
+  } catch (e) {
+    db = 'error: ' + (e.message || e);
+  }
   res.json({
     hasUser: !!req.session.user,
     role: req.session.user ? req.session.user.role : null,
@@ -152,6 +159,8 @@ app.get('/auth/debug', (req, res) => {
     callback: GITHUB.callbackURL,
     hasClientId: !!GITHUB.clientId,
     hasDbUrl: !!process.env.DATABASE_URL,
+    db: db,
+    cookie: req.headers.cookie || null,
     sessionId: req.session && req.session.id,
   });
 });
