@@ -16,26 +16,30 @@ const GITHUB = {
   callbackURL: process.env.GITHUB_CALLBACK_URL || 'http://localhost:3000/auth/callback',
 };
 
-const PRODUCTION = process.env.NODE_ENV === 'production';
+const PRODUCTION = process.env.NODE_ENV === 'production' || !!process.env.VERCEL;
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: PRODUCTION ? { rejectUnauthorized: false } : undefined,
 });
 
-app.set('trust proxy', 1);
+app.set('trust proxy', true);
 app.use(session({
   store: new (connectPgSimple(session))({
     pool,
     tableName: 'session',
     createTableIfMissing: true,
+    pruneSessionInterval: 60,
   }),
   secret: process.env.SESSION_SECRET || 'devlabs-dev-secret-change-me',
   resave: false,
   saveUninitialized: false,
+  rolling: true,
   cookie: {
     maxAge: 7 * 24 * 60 * 60 * 1000,
     secure: PRODUCTION,
+    httpOnly: true,
+    sameSite: 'lax',
   },
 }));
 
@@ -102,7 +106,10 @@ app.get('/auth/callback', async (req, res) => {
       role: isOwner ? 'owner' : 'member',
       token,
     };
-    res.redirect('/');
+    req.session.save(function (err) {
+      if (err) { console.error('Session save error:', err); return res.redirect('/?error=session_save'); }
+      res.redirect('/');
+    });
   } catch (e) {
     console.error('OAuth error:', e);
     res.redirect('/?error=auth_error');
@@ -110,6 +117,19 @@ app.get('/auth/callback', async (req, res) => {
 });
 
 app.get('/auth/logout', (req, res) => { req.session.destroy(); res.redirect('/'); });
+
+app.get('/auth/debug', (req, res) => {
+  res.json({
+    hasUser: !!req.session.user,
+    role: req.session.user ? req.session.user.role : null,
+    login: req.session.user ? req.session.user.login : null,
+    isProd: PRODUCTION,
+    callback: GITHUB.callbackURL,
+    hasClientId: !!GITHUB.clientId,
+    hasDbUrl: !!process.env.DATABASE_URL,
+    sessionId: req.session && req.session.id,
+  });
+});
 
 app.get('/auth/me', (req, res) => {
   if (!req.session.user) return res.json(null);
