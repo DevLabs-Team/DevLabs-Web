@@ -49,24 +49,45 @@ app.use(express.static(path.join(__dirname, 'public')));
 /* ── GitHub helpers ── */
 function githubGet(urlPath, token) {
   return new Promise((resolve, reject) => {
-    const opts = { hostname: 'api.github.com', path: urlPath, headers: { 'User-Agent': 'DevLabs-Web', 'Authorization': token ? 'token ' + token : undefined } };
-    https.get(opts, (res) => {
+    const opts = { hostname: 'api.github.com', path: urlPath, headers: { 'User-Agent': 'DevLabs-Web', 'Accept': 'application/vnd.github+json', 'Authorization': token ? 'token ' + token : undefined } };
+    const req = https.get(opts, (res) => {
       let body = '';
       res.on('data', (c) => body += c);
-      res.on('end', () => { try { resolve(JSON.parse(body)); } catch { resolve(body); } });
-    }).on('error', reject);
+      res.on('end', () => {
+        let parsed;
+        try { parsed = JSON.parse(body); } catch { parsed = body; }
+        if (res.statusCode >= 400) {
+          const err = new Error('GitHub GET ' + urlPath + ' -> ' + res.statusCode + ' ' + (typeof parsed === 'object' && parsed.message || ''));
+          err.status = res.statusCode;
+          return reject(err);
+        }
+        resolve(parsed);
+      });
+    });
+    req.on('error', reject);
+    req.setTimeout(15000, function () { req.destroy(new Error('GitHub GET timeout ' + urlPath)); });
   });
 }
 function githubPost(urlPath, data, token) {
   return new Promise((resolve, reject) => {
     const body = JSON.stringify(data);
-    const opts = { hostname: 'api.github.com', path: urlPath, method: 'POST', headers: { 'User-Agent': 'DevLabs-Web', 'Authorization': token ? 'token ' + token : undefined, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } };
+    const opts = { hostname: 'api.github.com', path: urlPath, method: 'POST', headers: { 'User-Agent': 'DevLabs-Web', 'Accept': 'application/vnd.github+json', 'Authorization': token ? 'token ' + token : undefined, 'Content-Type': 'application/json', 'Content-Length': Buffer.byteLength(body) } };
     const req = https.request(opts, (res) => {
       let b = '';
       res.on('data', (c) => b += c);
-      res.on('end', () => { try { resolve(JSON.parse(b)); } catch { resolve(b); } });
+      res.on('end', () => {
+        let parsed;
+        try { parsed = JSON.parse(b); } catch { parsed = b; }
+        if (res.statusCode >= 400) {
+          const err = new Error('GitHub POST ' + urlPath + ' -> ' + res.statusCode + ' ' + (typeof parsed === 'object' && parsed.message || ''));
+          err.status = res.statusCode;
+          return reject(err);
+        }
+        resolve(parsed);
+      });
     });
     req.on('error', reject);
+    req.setTimeout(15000, function () { req.destroy(new Error('GitHub POST timeout ' + urlPath)); });
     req.write(body);
     req.end();
   });
@@ -111,8 +132,8 @@ app.get('/auth/callback', async (req, res) => {
       res.redirect('/');
     });
   } catch (e) {
-    console.error('OAuth error:', e);
-    res.redirect('/?error=auth_error');
+    console.error('OAuth error:', e.message, e.stack);
+    res.redirect('/?error=auth_error&msg=' + encodeURIComponent(String(e.message || e)));
   }
 });
 
