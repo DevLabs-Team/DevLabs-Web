@@ -104,14 +104,14 @@
     var pollGrid = document.getElementById('polls-grid');
 
     fetch('/api/announcements').then(function(r){ return r.json(); }).then(function(anns) {
+      var typeColors = { 'general': 'var(--accent)', 'new-member': '#27c93f', 'milestone': 'var(--accent-secondary)' };
+      var typeLabels = { 'general': 'General', 'new-member': 'Nueva incorporaci\u00f3n', 'milestone': 'Hito alcanzado' };
       if (!anns.length) {
         annGrid.innerHTML = '<div class="updates-empty visible"><svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/><path d="M13.73 21a2 2 0 0 1-3.46 0"/></svg><p>No hay anuncios a&uacute;n.</p></div>';
         return;
       }
       annGrid.innerHTML = anns.map(function(a, idx) {
         var date = new Date(a.createdAt).toLocaleDateString('es-ES', { day:'numeric', month:'long', year:'numeric' });
-        var typeColors = { 'general': 'var(--accent)', 'new-member': '#27c93f', 'milestone': 'var(--accent-secondary)' };
-        var typeLabels = { 'general': 'General', 'new-member': 'Nueva incorporaci\u00f3n', 'milestone': 'Hito alcanzado' };
         var tag = typeLabels[a.type] || typeLabels.general;
         var tagColor = (typeColors[a.type] || typeColors.general).replace('var(--accent)', '#0066cc').replace('var(--accent-secondary)', '#7b2ff7');
         var contentHtml = a.content.replace(/\n/g, '<br>');
