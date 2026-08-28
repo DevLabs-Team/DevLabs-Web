@@ -6,25 +6,11 @@
   'use strict';
 
   /* ========================================
-     PRELOADER
+     HERO ANIMATIONS
      ======================================== */
-  const preloader = document.getElementById('preloader');
   window.addEventListener('load', () => {
-    setTimeout(() => {
-      preloader.classList.add('hidden');
-      document.body.style.overflow = '';
-      initHeroAnimations();
-    }, 2200);
+    initHeroAnimations();
   });
-
-  // Fallback
-  setTimeout(() => {
-    if (!preloader.classList.contains('hidden')) {
-      preloader.classList.add('hidden');
-      document.body.style.overflow = '';
-      initHeroAnimations();
-    }
-  }, 4000);
 
   /* ========================================
      CUSTOM CURSOR
@@ -1358,8 +1344,6 @@
   const savedTransition = sessionStorage.getItem('pageTransition');
   if (savedTransition) {
     sessionStorage.removeItem('pageTransition');
-    const preloader = document.getElementById('preloader');
-    if (preloader) preloader.style.display = 'none';
 
     if (savedTransition === 'glitch') {
       buildGlitchInner();
@@ -1369,7 +1353,6 @@
         tvOverlay.style.display = 'none';
         tvOverlay.classList.remove('glitch-in');
         tvOverlay.innerHTML = '';
-        if (preloader) preloader.style.display = '';
       }, TRANSITION_MS.glitch);
     } else if (savedTransition === 'scanline') {
       buildScanlineInner();
@@ -1379,7 +1362,6 @@
         tvOverlay.style.display = 'none';
         tvOverlay.classList.remove('scanline-in');
         tvOverlay.innerHTML = '';
-        if (preloader) preloader.style.display = '';
       }, TRANSITION_MS.scanline);
     } else {
       // tv (default)
@@ -1390,7 +1372,6 @@
         tvOverlay.style.display = 'none';
         tvOverlay.classList.remove('tv-on');
         tvOverlay.innerHTML = '';
-        if (preloader) preloader.style.display = '';
       }, TV_ON_MS);
     }
   }

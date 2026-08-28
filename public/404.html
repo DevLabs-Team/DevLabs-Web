@@ -103,19 +103,6 @@
 </head>
 <body>
 
-  <!-- Preloader -->
-  <div class="preloader" id="preloader">
-    <div class="preloader__inner">
-      <div class="preloader__logo">
-        <span class="preloader__bracket">&lt;</span>DL<span class="preloader__bracket">/&gt;
-      </div>
-      <div class="preloader__bar">
-        <div class="preloader__fill"></div>
-      </div>
-      <span class="preloader__text">route not found...</span>
-    </div>
-  </div>
-
   <!-- Custom Cursor -->
   <div class="cursor" id="cursor"></div>
   <div class="cursor-follower" id="cursor-follower"></div>
@@ -145,11 +132,6 @@
 
   <script>
     (function() {
-      const preloader = document.getElementById('preloader');
-      setTimeout(() => {
-        if (preloader) preloader.classList.add('hidden');
-        document.body.style.overflow = '';
-      }, 1500);
 
       // Custom cursor
       const cursor = document.getElementById('cursor');
